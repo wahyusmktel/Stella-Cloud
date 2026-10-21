@@ -426,13 +426,20 @@
     }
 
     async function rebuildVM(vmName) {
-      const pin = prompt(`⚡ FACTORY RESET [${vmName}]\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):`);
+      const pin = prompt(\u26a1 FACTORY RESET []\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):);
       if (!pin) return;
 
       pendingTransitions[vmName] = 'rebuilding';
-      showToast('Rebuilding OS', `Mereset ${vmName} ke master image kosongan bersih...`);
+      showToast('Rebuilding OS', Mereset  ke master image kosongan bersih...);
       loadGroups();
-      triggerFastPolling(10);
+      triggerFastPolling(15);
+
+      setTimeout(() => {
+        if (pendingTransitions[vmName] === 'rebuilding') {
+          delete pendingTransitions[vmName];
+          loadGroups();
+        }
+      }, 35000);
 
       try {
         const res = await fetch('/api/vm/rebuild', {
@@ -441,11 +448,20 @@
           body: JSON.stringify({ vmName, pin })
         });
         const data = await res.json();
-        showToast('Rebuild Selesai', data.message || `${vmName} berhasil dikosongkan.`, false);
+        if (!data.success) {
+          delete pendingTransitions[vmName];
+          showToast('Gagal Rebuild', data.message || ${vmName} gagal di-rebuild., false);
+          loadGroups();
+          hideToast(4000);
+          return;
+        }
+        showToast('Rebuild Selesai', data.message || ${vmName} berhasil dikosongkan., false);
         hideToast(2500);
       } catch (e) {
-        showToast('Error', 'Gagal melakukan rebuild.', false);
-        hideToast();
+        delete pendingTransitions[vmName];
+        showToast('Error', 'Gagal melakukan rebuild: ' + e.message, false);
+        loadGroups();
+        hideToast(3000);
       }
     }
 

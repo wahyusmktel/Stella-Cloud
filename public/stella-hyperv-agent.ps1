@@ -62,7 +62,7 @@ function Switch-ClassSession($targetClass) {
 
         try {
             if (-not (Test-Path $newVhd)) {
-                New-VHD -ParentPath $masterVHD -Path $newVhd -Differencing -Force -ErrorAction SilentlyContinue | Out-Null
+                New-VHD -ParentPath $masterVHD -Path $newVhd -Differencing -ErrorAction SilentlyContinue | Out-Null
             }
             $drive = Get-VMHardDiskDrive -VMName $vmName -ErrorAction Stop
             Set-VMHardDiskDrive -VMHardDiskDrive $drive -Path $newVhd -ErrorAction Stop
@@ -116,7 +116,7 @@ function Rebuild-VMInstance($vmName, $targetClass) {
 
     # 3. Buat differencing VHD baru
     try {
-        New-VHD -ParentPath $masterVHD -Path $vhdPath -Differencing -Force -ErrorAction Stop | Out-Null
+        New-VHD -ParentPath $masterVHD -Path $vhdPath -Differencing -ErrorAction Stop | Out-Null
     } catch {
         return "Gagal membuat disk differencing baru: $_"
     }
@@ -228,6 +228,17 @@ while ($listener.IsListening) {
             if ($vmName) {
                 Restart-VM -Name $vmName -Force -ErrorAction SilentlyContinue
                 $resObj = @{ success = $true; message = "$vmName berhasil direstart" }
+            }
+        }
+        elseif ($url -match "/api/update-agent") {
+            Write-Host "[UPDATE] Memperbarui script controller dari portal..." -ForegroundColor Cyan
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $code = (New-Object System.Net.WebClient).DownloadString("https://cloud.smktelkom-lpg.id/stella-hyperv-agent.ps1")
+                Set-Content -Path "C:\stella-controller.ps1" -Value $code -Force
+                $resObj = @{ success = $true; message = "Controller berhasil diupdate! Silakan jalankan ulang." }
+            } catch {
+                $resObj = @{ success = $false; message = "Gagal mengunduh update: $_" }
             }
         }
 
