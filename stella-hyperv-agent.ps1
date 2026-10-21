@@ -1,6 +1,6 @@
 # =====================================================================
 # STELLA HYPER-V CONTROLLER AGENT (Port 5555)
-# Micro-service untuk Multi-Class Profile Switcher & Instant Rebuild
+# Micro-service untuk Multi-Class Profile Switcher & Instant Rebuild & Power
 # =====================================================================
 
 $masterVHD = "C:\ProgramData\Microsoft\Windows\Virtual Hard Disks\Ubuntu-Master.vhdx"
@@ -50,7 +50,7 @@ function Switch-ClassSession($targetClass) {
             Start-VM -Name $vmName
             Write-Host "  -> $vmName dialihkan ke $targetClass" -ForegroundColor Green
         } catch {
-            Write-Host "  -> Gagal pada $vmName: $_" -ForegroundColor Red
+            Write-Host "  -> Gagal pada $($vmName)" -ForegroundColor Red
         }
     }
     return "Berhasil beralih ke sesi $targetClass"
@@ -85,10 +85,10 @@ try {
     $listener.Start()
     Write-Host "`n=======================================================" -ForegroundColor Green
     Write-Host " STELLA HYPER-V CONTROLLER AKTIF DI PORT 5555" -ForegroundColor Green
-    Write-Host " Siap menerima perintah Switch Kelas & Rebuild VM" -ForegroundColor Green
+    Write-Host " Siap menerima perintah Switch Kelas, Rebuild & Power" -ForegroundColor Green
     Write-Host "=======================================================`n" -ForegroundColor Green
 } catch {
-    Write-Host "Gagal menyalakan listener di port 5555. Pastikan dijalankan sebagai Administrator: $_" -ForegroundColor Red
+    Write-Host "Gagal menyalakan listener di port 5555: $_" -ForegroundColor Red
     return
 }
 
@@ -131,30 +131,33 @@ while ($listener.IsListening) {
             $resObj = @{ success = $false; message = "Nama VM diperlukan" }
         }
     }
-
     elseif ($url -match "/api/power-vm") {
         $vmName = $request.QueryString["vm"]
-        $action = $request.QueryString["action"] # "start" or "stop"
+        $action = $request.QueryString["action"]
         
         if ($vmName) {
             if ($action -eq "start") {
                 Start-VM -Name $vmName -ErrorAction SilentlyContinue
                 $resObj = @{ success = $true; message = "$vmName berhasil dinyalakan" }
+                Write-Host "[POWER] Menyalakan $vmName" -ForegroundColor Green
             } elseif ($action -eq "stop") {
                 Stop-VM -Name $vmName -TurnOff -ErrorAction SilentlyContinue
                 $resObj = @{ success = $true; message = "$vmName berhasil dimatikan" }
+                Write-Host "[POWER] Mematikan $vmName" -ForegroundColor Yellow
             }
         }
     }
     elseif ($url -match "/api/power-all") {
-        $action = $request.QueryString["action"] # "start-all" or "stop-all"
+        $action = $request.QueryString["action"]
         if ($action -eq "start-all") {
+            Write-Host "[POWER] Menyalakan seluruh 15 VM..." -ForegroundColor Green
             1..15 | ForEach-Object {
                 $num = "{0:D2}" -f $_
                 Start-VM -Name "TKJ-Kelompok-$num" -ErrorAction SilentlyContinue
             }
             $resObj = @{ success = $true; message = "Semua 15 VM berhasil dinyalakan" }
         } elseif ($action -eq "stop-all") {
+            Write-Host "[POWER] Mematikan seluruh 15 VM..." -ForegroundColor Yellow
             1..15 | ForEach-Object {
                 $num = "{0:D2}" -f $_
                 Stop-VM -Name "TKJ-Kelompok-$num" -TurnOff -ErrorAction SilentlyContinue
@@ -162,11 +165,10 @@ while ($listener.IsListening) {
             $resObj = @{ success = $true; message = "Semua 15 VM berhasil dimatikan" }
         }
     }
-
     elseif ($url -match "/api/reboot-vm") {
         $vmName = $request.QueryString["vm"]
         if ($vmName) {
-            Restart-VM -Name $vmName -Force
+            Restart-VM -Name $vmName -Force -ErrorAction SilentlyContinue
             $resObj = @{ success = $true; message = "$vmName berhasil direstart" }
         }
     }
