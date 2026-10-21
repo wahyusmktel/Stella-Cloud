@@ -426,11 +426,11 @@
     }
 
     async function rebuildVM(vmName) {
-      const pin = prompt(\u26a1 FACTORY RESET []\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):);
+      const pin = prompt('⚡ FACTORY RESET [' + vmName + ']\\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\\nMasukkan PIN Admin Guru (Default: admin123):');
       if (!pin) return;
 
       pendingTransitions[vmName] = 'rebuilding';
-      showToast('Rebuilding OS', Mereset  ke master image kosongan bersih...);
+      showToast('Rebuilding OS', 'Mereset ' + vmName + ' ke master image kosongan bersih...');
       loadGroups();
       triggerFastPolling(15);
 
@@ -450,18 +450,18 @@
         const data = await res.json();
         if (!data.success) {
           delete pendingTransitions[vmName];
-          showToast('Gagal Rebuild', data.message || ${vmName} gagal di-rebuild., false);
+          showToast('Gagal Rebuild', data.message || (vmName + ' gagal di-rebuild.'), false);
           loadGroups();
           hideToast(4000);
           return;
         }
-        showToast('Rebuild Selesai', data.message || ${vmName} berhasil dikosongkan., false);
+        showToast('Rebuild Selesai', data.message || (vmName + ' berhasil dikosongkan.'), false);
         hideToast(2500);
       } catch (e) {
         delete pendingTransitions[vmName];
-        showToast('Error', 'Gagal melakukan rebuild: ' + e.message, false);
+        showToast('Error', 'Gagal melakukan rebuild.', false);
         loadGroups();
-        hideToast(3000);
+        hideToast();
       }
     }
 
