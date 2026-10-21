@@ -401,7 +401,7 @@ sudo apt install apache2 php libapache2-mod-php -y</pre>
       };
 
       fetchVMMetrics();
-      vmMetricsTimer = setInterval(fetchVMMetrics, 3000);
+      vmMetricsTimer = setInterval(fetchVMMetrics, 8000);
     }
 
     async function loadPairingOptions() {
@@ -476,8 +476,13 @@ sudo apt install apache2 php libapache2-mod-php -y</pre>
       const termContainer = document.getElementById('terminal');
       term = new Terminal({
         cursorBlink: true,
+        cursorStyle: 'block',
         fontSize: 13,
-        fontFamily: 'JetBrains Mono, monospace',
+        fontFamily: 'JetBrains Mono, Menlo, monospace',
+        lineHeight: 1.2,
+        scrollback: 1500,
+        windowsMode: false,
+        fastScrollModifier: 'alt',
         theme: {
           background: '#0f172a',
           foreground: '#e2e8f0',
@@ -503,10 +508,17 @@ sudo apt install apache2 php libapache2-mod-php -y</pre>
       statusBadge.textContent = 'Connecting...';
       statusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium';
 
-      socket = io();
+      // Force pure WebSocket connection for ultra-responsive low latency typing
+      socket = io({
+        transports: ['websocket'],
+        upgrade: false,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000
+      });
 
       socket.on('connect', () => {
-        statusBadge.textContent = 'Connected';
+        statusBadge.textContent = 'Connected (Ultra-Fast WS)';
         statusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-medium';
         socket.emit('start-session', { nis: currentStudent.nis });
       });

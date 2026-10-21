@@ -11,7 +11,17 @@ const os = require('os');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: { origin: "*" },
+  transports: ['websocket', 'polling'],
+  allowUpgrades: true,
+  pingTimeout: 30000,
+  pingInterval: 15000,
+  perMessageDeflate: false // Disable compression for low-latency terminal byte streams
+});
+
+// Disable Nagle's algorithm on all incoming HTTP/WebSocket connections
+server.on('connection', (sock) => {
+  sock.setNoDelay(true);
 });
 
 const PORT = 4000;
@@ -156,8 +166,9 @@ async function pollAllVMMetrics() {
   }
 }
 
-setInterval(pollAllVMMetrics, 10000);
-setTimeout(pollAllVMMetrics, 1000);
+// Background poller sequentially to avoid network burst (every 25 seconds)
+setInterval(pollAllVMMetrics, 25000);
+setTimeout(pollAllVMMetrics, 1500);
 
 // Endpoint for single VM (for Student Dashboard)
 app.get('/api/vm/metrics', async (req, res) => {
@@ -165,7 +176,7 @@ app.get('/api/vm/metrics', async (req, res) => {
   if (!ip) return res.status(400).json({ success: false, message: 'IP VM diperlukan' });
 
   let data = vmMetricsCache[ip];
-  if (!data || (Date.now() - data.lastUpdated > 8000)) {
+  if (!data || (Date.now() - data.lastUpdated > 18000)) {
     const live = await getVMMetrics(ip);
     if (live) {
       vmMetricsCache[ip] = { ...live, lastUpdated: Date.now() };
@@ -443,9 +454,10 @@ app.post('/api/admin/reset-group', (req, res) => {
   res.status(404).json({ success: false, message: 'Kelompok tidak ditemukan' });
 });
 
-// Socket.IO SSH Bridge
+// Socket.IO SSH Bridge (High-Performance Low-Latency)
 io.on('connection', (socket) => {
   let sshClient = null;
+  let tcpSocket = null;
 
   socket.on('start-session', ({ nis }) => {
     const db = readDB();
@@ -465,31 +477,49 @@ io.on('connection', (socket) => {
     socket.emit('output', `\r\n\x1b[36m[STELLA CLOUD]\x1b[0m Menghubungkan ke ${group.name} (${group.ip})...\r\n`);
 
     sshClient = new Client();
+    tcpSocket = new net.Socket();
+
+    // Disable Nagle's algorithm for instant keystroke transmission
+    tcpSocket.setNoDelay(true);
+    tcpSocket.setKeepAlive(true, 5000);
+
+    tcpSocket.on('error', (err) => {
+      socket.emit('output', `\r\n\x1b[31m[Koneksi TCP Gagal]: ${err.message}\x1b[0m\r\n`);
+    });
 
     sshClient.on('ready', () => {
       socket.emit('output', `\x1b[32m[TERHUBUNG]\x1b[0m Selamat datang di terminal ${group.name}!\r\n\r\n`);
 
-      sshClient.shell({ term: 'xterm-256color', cols: 80, rows: 24 }, (err, stream) => {
+      sshClient.shell({
+        term: 'xterm-256color',
+        cols: 80,
+        rows: 24
+      }, (err, stream) => {
         if (err) {
           socket.emit('output', `\r\n\x1b[31m[ERROR Gagal membuka shell]: ${err.message}\x1b[0m\r\n`);
           return;
         }
 
+        // Fast output streaming
         stream.on('data', (data) => {
           socket.emit('output', data.toString('utf-8'));
         });
 
         stream.on('close', () => {
           socket.emit('output', '\r\n\x1b[33m[Koneksi SSH ditutup oleh host]\x1b[0m\r\n');
-          sshClient.end();
+          if (sshClient) sshClient.end();
         });
 
         socket.on('input', (data) => {
-          stream.write(data);
+          if (stream && stream.writable) {
+            stream.write(data);
+          }
         });
 
         socket.on('resize', ({ cols, rows }) => {
-          stream.setWindow(rows, cols);
+          if (stream && stream.writable) {
+            stream.setWindow(rows, cols);
+          }
         });
       });
     });
@@ -502,19 +532,26 @@ io.on('connection', (socket) => {
       socket.emit('output', '\r\n\x1b[90m[Sesi Terputus]\x1b[0m\r\n');
     });
 
-    // Connect to the group's Ubuntu Server VM
-    sshClient.connect({
-      host: group.ip,
-      port: 22,
-      username: 'tkj',
-      password: 'smktelkom',
-      readyTimeout: 10000
+    // Connect to the group's Ubuntu Server VM using the optimized TCP socket
+    tcpSocket.connect(22, group.ip, () => {
+      sshClient.connect({
+        sock: tcpSocket,
+        username: 'tkj',
+        password: 'smktelkom',
+        readyTimeout: 10000,
+        keepaliveInterval: 5000
+      });
     });
   });
 
   socket.on('disconnect', () => {
     if (sshClient) {
       try { sshClient.end(); } catch (e) {}
+      sshClient = null;
+    }
+    if (tcpSocket) {
+      try { tcpSocket.destroy(); } catch (e) {}
+      tcpSocket = null;
     }
   });
 });
