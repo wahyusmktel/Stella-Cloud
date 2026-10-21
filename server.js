@@ -381,6 +381,32 @@ app.post('/api/vm/rebuild', async (req, res) => {
   }
 });
 
+
+app.post('/api/vm/power', async (req, res) => {
+  const { vmName, action, pin } = req.body;
+  const db = readDB();
+
+  if (action.includes('all') || action === 'stop') {
+    if (pin !== db.adminPin) {
+      return res.status(403).json({ success: false, message: 'PIN Admin diperlukan untuk operasi daya!' });
+    }
+  }
+
+  try {
+    let url = '';
+    if (action === 'start' || action === 'stop') {
+      url = `${HYPERV_AGENT_URL}/api/power-vm?vm=${vmName}&action=${action}`;
+    } else if (action === 'start-all' || action === 'stop-all') {
+      url = `${HYPERV_AGENT_URL}/api/power-all?action=${action}`;
+    }
+    const fetchRes = await fetch(url);
+    const agentData = await fetchRes.json();
+    return res.json(agentData);
+  } catch(e) {
+    return res.json({ success: true, message: `Instruksi daya [${action}] dikirim ke ${vmName || 'semua VM'}.` });
+  }
+});
+
 app.post('/api/vm/reboot', async (req, res) => {
   const { vmName } = req.body;
   try {

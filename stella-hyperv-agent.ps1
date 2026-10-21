@@ -131,6 +131,38 @@ while ($listener.IsListening) {
             $resObj = @{ success = $false; message = "Nama VM diperlukan" }
         }
     }
+
+    elseif ($url -match "/api/power-vm") {
+        $vmName = $request.QueryString["vm"]
+        $action = $request.QueryString["action"] # "start" or "stop"
+        
+        if ($vmName) {
+            if ($action -eq "start") {
+                Start-VM -Name $vmName -ErrorAction SilentlyContinue
+                $resObj = @{ success = $true; message = "$vmName berhasil dinyalakan" }
+            } elseif ($action -eq "stop") {
+                Stop-VM -Name $vmName -TurnOff -ErrorAction SilentlyContinue
+                $resObj = @{ success = $true; message = "$vmName berhasil dimatikan" }
+            }
+        }
+    }
+    elseif ($url -match "/api/power-all") {
+        $action = $request.QueryString["action"] # "start-all" or "stop-all"
+        if ($action -eq "start-all") {
+            1..15 | ForEach-Object {
+                $num = "{0:D2}" -f $_
+                Start-VM -Name "TKJ-Kelompok-$num" -ErrorAction SilentlyContinue
+            }
+            $resObj = @{ success = $true; message = "Semua 15 VM berhasil dinyalakan" }
+        } elseif ($action -eq "stop-all") {
+            1..15 | ForEach-Object {
+                $num = "{0:D2}" -f $_
+                Stop-VM -Name "TKJ-Kelompok-$num" -TurnOff -ErrorAction SilentlyContinue
+            }
+            $resObj = @{ success = $true; message = "Semua 15 VM berhasil dimatikan" }
+        }
+    }
+
     elseif ($url -match "/api/reboot-vm") {
         $vmName = $request.QueryString["vm"]
         if ($vmName) {

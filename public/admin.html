@@ -43,7 +43,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring Guru</h1>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">CLOUD CONSOLE</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Manajemen sesi kelas (XI TKJ 1 / XI TKJ 2), live telemetry, dan instant rebuild.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Manajemen daya VM (Start/Stop), sesi kelas (XI TKJ 1 / 2), dan instant rebuild.</p>
         </div>
       </div>
 
@@ -58,34 +58,48 @@
       </div>
     </div>
 
-    <!-- CLASS SESSION SWITCHER BAR (MULTI-TENANT PROFILE) -->
-    <div class="cyber-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-cyan-600">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center font-bold font-mono">
-          🏫
-        </div>
+    <!-- MASTER POWER CONTROL & CLASS SWITCHER BAR -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- Box 1: Sesi Kelas -->
+      <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-cyan-600">
         <div>
           <div class="flex items-center gap-2">
-            <h2 class="text-sm font-bold text-slate-800">Sesi Kelas Aktif Saat Ini:</h2>
-            <span id="activeSessionBadge" class="px-2.5 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
+            <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Sesi Kelas Aktif</h2>
+            <span id="activeSessionBadge" class="px-2 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Mengalihkan sesi akan menukar disk VM secara otomatis sehingga progress kelas tersimpan aman.</p>
+          <p class="text-[11px] text-slate-400 mt-1">Tugas tersimpan per kelas.</p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm">
+            XI TKJ 1
+          </button>
+          <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
+            XI TKJ 2
+          </button>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm">
-          <span>Sesi: XI TKJ 1</span>
-        </button>
-        <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
-          <span>Sesi: XI TKJ 2</span>
-        </button>
+      <!-- Box 2: Master Power Control 15 VM -->
+      <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-emerald-600">
+        <div>
+          <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Master Daya (15 VM)</h2>
+          <p class="text-[11px] text-slate-400 mt-1">Nyalakan/matikan semua VM serentak.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="powerAll('start-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 shadow-sm">
+            <span>▶️ Nyalakan Semua</span>
+          </button>
+          <button onclick="powerAll('stop-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
+            <span>⏹️ Matikan Semua</span>
+          </button>
+        </div>
       </div>
+
     </div>
 
     <!-- METRICS CARDS & REAL-TIME CHARTS (HOST SERVER) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <!-- CPU Usage Card & Interactive Chart -->
       <div class="cyber-card rounded-2xl p-5 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -113,7 +127,6 @@
         </div>
       </div>
 
-      <!-- Memory Usage Card & Interactive Chart -->
       <div class="cyber-card rounded-2xl p-5 space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -142,12 +155,12 @@
       </div>
     </div>
 
-    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU & REBUILD -->
+    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU & REBUILD & POWER -->
     <div class="cyber-card rounded-2xl overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
         <div>
           <h2 class="font-bold text-sm text-slate-800">Status 15 Server VM Siswa</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Telemetri live beban RAM & CPU masing-masing VM Ubuntu.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Kontrol daya (Nyalakan/Matikan), telemetri live, dan rebuild per kelompok.</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="loadGroups()" class="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
@@ -243,11 +256,11 @@
       const btn2 = document.getElementById('btnSessionTKJ2');
 
       if (currentSession === 'XI-TKJ-1') {
-        btn1.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm';
-        btn2.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+        btn1.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm';
+        btn2.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
       } else {
-        btn2.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm';
-        btn1.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+        btn2.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm';
+        btn1.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
       }
     }
 
@@ -269,6 +282,47 @@
         loadGroups();
       } catch(e) {
         alert('Gagal menghubungi controller.');
+      }
+    }
+
+    async function togglePowerVM(vmName, action) {
+      const actionText = action === 'start' ? 'Menyalakan' : 'Mematikan';
+      let pin = '';
+      if (action === 'stop') {
+        pin = prompt(`Konfirmasi ${actionText} [${vmName}]\nMasukkan PIN Admin Guru (Default: admin123):`);
+        if (!pin) return;
+      }
+
+      try {
+        const res = await fetch('/api/vm/power', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vmName, action, pin })
+        });
+        const data = await res.json();
+        alert(data.message);
+        setTimeout(loadGroups, 2000);
+      } catch (e) {
+        alert('Gagal mengirim perintah daya.');
+      }
+    }
+
+    async function powerAll(action) {
+      const actionText = action === 'start-all' ? 'Menyalakan Seluruh 15 VM' : 'Mematikan Seluruh 15 VM';
+      const pin = prompt(`⚠️ KONFIRMASI DAYA MASSAL\n${actionText}\nMasukkan PIN Admin Guru (Default: admin123):`);
+      if (!pin) return;
+
+      try {
+        const res = await fetch('/api/vm/power', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, pin })
+        });
+        const data = await res.json();
+        alert(data.message);
+        setTimeout(loadGroups, 4000);
+      } catch (e) {
+        alert('Gagal mengirim perintah daya massal.');
       }
     }
 
@@ -323,15 +377,19 @@
           tr.className = 'hover:bg-slate-50/80 transition';
 
           const statusBadge = g.isOnline 
-            ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">ONLINE</span>'
-            : '<span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px]">OFFLINE</span>';
+            ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">RUNNING</span>'
+            : '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px]">STOPPED</span>';
 
           const membersList = g.members.length > 0 
             ? g.members.join(', ')
             : '<span class="text-slate-400 italic">Belum ada siswa</span>';
 
-          const m = g.metrics || { usedMB: 154, totalMB: 384, memPercent: 40, cpuPercent: 0 };
-          const ramBarWidth = Math.min(100, Math.max(8, m.memPercent));
+          const m = g.metrics || { usedMB: 0, totalMB: 384, memPercent: 0, cpuPercent: 0 };
+          const ramBarWidth = g.isOnline ? Math.min(100, Math.max(8, m.memPercent)) : 0;
+
+          const powerBtn = g.isOnline
+            ? `<button onclick="togglePowerVM('${g.name}', 'stop')" class="text-[11px] px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition" title="Matikan Mesin">⏹️ Stop</button>`
+            : `<button onclick="togglePowerVM('${g.name}', 'start')" class="text-[11px] px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition" title="Nyalakan Mesin">▶️ Start</button>`;
 
           tr.innerHTML = `
             <td class="p-3.5 font-bold text-slate-900">${g.name}</td>
@@ -339,19 +397,20 @@
             <td class="p-3.5">${statusBadge}</td>
             <td class="p-3.5">
               <div class="space-y-1">
-                <div class="text-[11px] text-slate-700">${m.usedMB} MB <span class="text-slate-400">/ ${m.totalMB} MB</span></div>
+                <div class="text-[11px] text-slate-700">${g.isOnline ? m.usedMB + ' MB' : '-'} <span class="text-slate-400">/ ${m.totalMB} MB</span></div>
                 <div class="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
                   <div class="bg-indigo-500 h-1.5 rounded-full" style="width: ${ramBarWidth}%"></div>
                 </div>
               </div>
             </td>
             <td class="p-3.5">
-              <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">${m.cpuPercent}%</span>
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">${g.isOnline ? m.cpuPercent + '%' : '-'}</span>
             </td>
             <td class="p-3.5 text-slate-700 font-sans">${membersList}</td>
             <td class="p-3.5 text-right font-sans space-x-1">
+              ${powerBtn}
               <button onclick="rebuildVM('${g.name}')" class="text-[11px] px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition" title="Kembalikan ke Ubuntu bersih">⚡ Rebuild</button>
-              <button onclick="resetGroup(${g.id})" class="text-[11px] px-2 py-1 text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition">Reset</button>
+              <button onclick="resetGroup(${g.id})" class="text-[11px] px-2 py-1 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition" title="Kosongkan nama anggota siswa">Reset</button>
             </td>
           `;
           tbody.appendChild(tr);
