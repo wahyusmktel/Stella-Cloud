@@ -126,7 +126,7 @@ function Rebuild-VMInstance($vmName, $targetClass) {
         $drive = Get-VMHardDiskDrive -VMName $vmName -ErrorAction Stop
         Set-VMHardDiskDrive -VMHardDiskDrive $drive -Path $vhdPath -ErrorAction Stop
     } catch {
-        return "Gagal memasang hard disk baru ke $vmName: $_"
+        return "Gagal memasang hard disk baru ke $($vmName) - $_"
     }
 
     # 5. Nyalakan VM
