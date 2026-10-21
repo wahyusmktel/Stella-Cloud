@@ -529,6 +529,26 @@ sudo apt install apache2 php libapache2-mod-php -y</pre>
       });
     }
 
+    
+    async function rebuildMyVM() {
+      if (!currentStudent || !currentStudent.group) return;
+      const conf = confirm(`⚠️ PERINGATAN REBUILD OS\nServer ${currentStudent.group.name} akan dikosongkan kembali ke kondisi bersih Ubuntu Server awal.\nSemua file yang sudah Anda pasang akan dihapus.\n\nLanjutkan?`);
+      if (!conf) return;
+
+      try {
+        const res = await fetch('/api/vm/rebuild', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vmName: currentStudent.group.name })
+        });
+        const data = await res.json();
+        alert(data.message || 'Instruksi rebuild berhasil dikirim. Server akan siap dalam beberapa detik.');
+        reconnectSSH();
+      } catch(e) {
+        alert('Gagal mengirim instruksi rebuild.');
+      }
+    }
+
     function reconnectSSH() {
       if (term) term.clear();
       if (socket) {

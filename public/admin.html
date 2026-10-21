@@ -41,16 +41,16 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring Guru</h1>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">LIVE METRICS</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">CLOUD CONSOLE</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Monitoring beban Server Portal & Telemetri 15 VM Siswa secara real-time.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Manajemen sesi kelas (XI TKJ 1 / XI TKJ 2), live telemetry, dan instant rebuild.</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-600 shadow-sm">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Refresh Otomatis: <strong class="text-slate-800">2s</strong></span>
+          <span>Auto-Refresh: <strong class="text-slate-800">2s</strong></span>
         </div>
         <a href="/" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition shadow-sm">
           Portal Siswa
@@ -58,9 +58,33 @@
       </div>
     </div>
 
+    <!-- CLASS SESSION SWITCHER BAR (MULTI-TENANT PROFILE) -->
+    <div class="cyber-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-cyan-600">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center font-bold font-mono">
+          🏫
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold text-slate-800">Sesi Kelas Aktif Saat Ini:</h2>
+            <span id="activeSessionBadge" class="px-2.5 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Mengalihkan sesi akan menukar disk VM secara otomatis sehingga progress kelas tersimpan aman.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm">
+          <span>Sesi: XI TKJ 1</span>
+        </button>
+        <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
+          <span>Sesi: XI TKJ 2</span>
+        </button>
+      </div>
+    </div>
+
     <!-- METRICS CARDS & REAL-TIME CHARTS (HOST SERVER) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
       <!-- CPU Usage Card & Interactive Chart -->
       <div class="cyber-card rounded-2xl p-5 space-y-4">
         <div class="flex items-center justify-between">
@@ -82,9 +106,8 @@
             <span id="cpuBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Normal</span>
           </div>
         </div>
-
         <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 150px; position: relative;">
+          <div style="height: 140px; position: relative;">
             <canvas id="cpuChart"></canvas>
           </div>
         </div>
@@ -111,55 +134,29 @@
             <span id="memBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Lega</span>
           </div>
         </div>
-
         <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 150px; position: relative;">
+          <div style="height: 140px; position: relative;">
             <canvas id="memChart"></canvas>
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- QUICK SYSTEM STATS -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="cyber-card rounded-xl p-4">
-        <div class="text-xs font-medium text-slate-500">Total VM Siswa</div>
-        <div class="text-xl font-bold text-slate-900 font-mono mt-1">15 Server</div>
-        <div class="text-[11px] text-emerald-600 font-mono mt-0.5 flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 100% Siap
-        </div>
-      </div>
-      <div class="cyber-card rounded-xl p-4">
-        <div class="text-xs font-medium text-slate-500">Kelompok Terisi</div>
-        <div id="statPairedGroups" class="text-xl font-bold text-slate-900 font-mono mt-1">0 / 15</div>
-        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Kelompok Aktif</div>
-      </div>
-      <div class="cyber-card rounded-xl p-4">
-        <div class="text-xs font-medium text-slate-500">Siswa Terpasang</div>
-        <div id="statPairedStudents" class="text-xl font-bold text-slate-900 font-mono mt-1">0 / 30</div>
-        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Siswa XI TKJ</div>
-      </div>
-      <div class="cyber-card rounded-xl p-4">
-        <div class="text-xs font-medium text-slate-500">Server Uptime</div>
-        <div id="statUptime" class="text-xl font-bold text-slate-900 font-mono mt-1">0 Jam</div>
-        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Stella Local Host</div>
-      </div>
-    </div>
-
-    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU -->
+    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU & REBUILD -->
     <div class="cyber-card rounded-2xl overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
         <div>
-          <h2 class="font-bold text-sm text-slate-800">Status & Telemetri 15 Server VM Kelompok Siswa</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Monitoring beban CPU & RAM masing-masing VM Ubuntu siswa.</p>
+          <h2 class="font-bold text-sm text-slate-800">Status 15 Server VM Siswa</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Telemetri live beban RAM & CPU masing-masing VM Ubuntu.</p>
         </div>
-        <button onclick="loadGroups()" class="text-xs px-3.5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          <span>Refresh Tabel</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="loadGroups()" class="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -170,9 +167,9 @@
               <th class="p-3.5">IP Server (VM)</th>
               <th class="p-3.5">Status</th>
               <th class="p-3.5">RAM VM Siswa</th>
-              <th class="p-3.5">CPU VM Siswa</th>
+              <th class="p-3.5">CPU VM</th>
               <th class="p-3.5">Anggota Siswa</th>
-              <th class="p-3.5 text-right">Aksi</th>
+              <th class="p-3.5 text-right">Kontrol Instance</th>
             </tr>
           </thead>
           <tbody id="groupTableBody" class="divide-y divide-slate-100 font-mono">
@@ -185,6 +182,8 @@
   </div>
 
   <script>
+    let currentSession = 'XI-TKJ-1';
+
     const MAX_POINTS = 20;
     const timeLabels = Array(MAX_POINTS).fill('');
     const cpuData = Array(MAX_POINTS).fill(0);
@@ -198,60 +197,98 @@
         y: {
           min: 0,
           max: 100,
-          ticks: {
-            callback: value => value + '%',
-            font: { family: 'JetBrains Mono', size: 10 },
-            color: '#94a3b8'
-          },
+          ticks: { callback: v => v + '%', font: { family: 'JetBrains Mono', size: 10 }, color: '#94a3b8' },
           grid: { color: 'rgba(226, 232, 240, 0.6)' }
         },
         x: { display: false, grid: { display: false } }
       },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: { label: context => ` ${context.parsed.y}%` }
-        }
+        tooltip: { mode: 'index', intersect: false, callbacks: { label: c => ` ${c.parsed.y}%` } }
       }
     };
 
-    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-    const cpuChart = new Chart(cpuCtx, {
+    const cpuChart = new Chart(document.getElementById('cpuChart').getContext('2d'), {
       type: 'line',
       data: {
         labels: timeLabels,
-        datasets: [{
-          data: cpuData,
-          borderColor: '#0284c7',
-          backgroundColor: 'rgba(14, 165, 233, 0.12)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 1
-        }]
+        datasets: [{ data: cpuData, borderColor: '#0284c7', backgroundColor: 'rgba(14, 165, 233, 0.12)', borderWidth: 2, fill: true, tension: 0.35, pointRadius: 1 }]
       },
       options: chartOptions
     });
 
-    const memCtx = document.getElementById('memChart').getContext('2d');
-    const memChart = new Chart(memCtx, {
+    const memChart = new Chart(document.getElementById('memChart').getContext('2d'), {
       type: 'line',
       data: {
         labels: timeLabels,
-        datasets: [{
-          data: memData,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.12)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.35,
-          pointRadius: 1
-        }]
+        datasets: [{ data: memData, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.12)', borderWidth: 2, fill: true, tension: 0.35, pointRadius: 1 }]
       },
       options: chartOptions
     });
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/session/current');
+        const data = await res.json();
+        if (data.success && data.activeSession) {
+          currentSession = data.activeSession;
+          updateSessionUI();
+        }
+      } catch (e) {}
+    }
+
+    function updateSessionUI() {
+      document.getElementById('activeSessionBadge').textContent = currentSession;
+      const btn1 = document.getElementById('btnSessionTKJ1');
+      const btn2 = document.getElementById('btnSessionTKJ2');
+
+      if (currentSession === 'XI-TKJ-1') {
+        btn1.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm';
+        btn2.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+      } else {
+        btn2.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-cyan-600 text-white shadow-sm';
+        btn1.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+      }
+    }
+
+    async function switchSession(targetClass) {
+      if (targetClass === currentSession) return;
+      const pin = prompt(`Peralihan Sesi ke [${targetClass}]\nMasukkan PIN Admin Guru (Default: admin123):`);
+      if (!pin) return;
+
+      try {
+        const res = await fetch('/api/session/switch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetClass, pin })
+        });
+        const data = await res.json();
+        alert(data.message);
+        currentSession = targetClass;
+        updateSessionUI();
+        loadGroups();
+      } catch(e) {
+        alert('Gagal menghubungi controller.');
+      }
+    }
+
+    async function rebuildVM(vmName) {
+      const pin = prompt(`⚡ FACTORY RESET INSTANCE [${vmName}]\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):`);
+      if (!pin) return;
+
+      try {
+        const res = await fetch('/api/vm/rebuild', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vmName, pin })
+        });
+        const data = await res.json();
+        alert(data.message);
+        loadGroups();
+      } catch (e) {
+        alert('Gagal melakukan rebuild.');
+      }
+    }
 
     async function updateMetrics() {
       try {
@@ -261,10 +298,8 @@
 
         document.getElementById('cpuPercentVal').textContent = `${data.cpu.usagePercent}%`;
         document.getElementById('cpuCoresVal').textContent = `${data.cpu.cores} Cores`;
-        
         document.getElementById('memPercentVal').textContent = `${data.memory.usagePercent}%`;
         document.getElementById('memDetailVal').textContent = `${data.memory.usedGB} GB / ${data.memory.totalGB} GB`;
-        document.getElementById('statUptime').textContent = `${data.uptimeHours} Jam`;
 
         cpuData.shift();
         cpuData.push(data.cpu.usagePercent);
@@ -281,19 +316,11 @@
       try {
         const res = await fetch('/api/groups/status');
         const data = await res.json();
-        
         tbody.innerHTML = '';
-        let pairedCount = 0;
-        let studentCount = 0;
 
         data.groups.forEach(g => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-slate-50/80 transition';
-          
-          if (g.members.length > 0) {
-            pairedCount++;
-            studentCount += g.members.length;
-          }
 
           const statusBadge = g.isOnline 
             ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">ONLINE</span>'
@@ -322,18 +349,14 @@
               <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">${m.cpuPercent}%</span>
             </td>
             <td class="p-3.5 text-slate-700 font-sans">${membersList}</td>
-            <td class="p-3.5 text-right font-sans">
-              <button onclick="resetGroup(${g.id})" class="text-xs px-2.5 py-1 text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition">Reset</button>
+            <td class="p-3.5 text-right font-sans space-x-1">
+              <button onclick="rebuildVM('${g.name}')" class="text-[11px] px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition" title="Kembalikan ke Ubuntu bersih">⚡ Rebuild</button>
+              <button onclick="resetGroup(${g.id})" class="text-[11px] px-2 py-1 text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition">Reset</button>
             </td>
           `;
           tbody.appendChild(tr);
         });
-
-        document.getElementById('statPairedGroups').textContent = `${pairedCount} / 15`;
-        document.getElementById('statPairedStudents').textContent = `${studentCount} / 30`;
-      } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-red-500">Gagal mengambil data server.</td></tr>';
-      }
+      } catch (e) {}
     }
 
     async function resetGroup(groupId) {
@@ -350,10 +373,11 @@
       loadGroups();
     }
 
+    checkSession();
     updateMetrics();
     setInterval(updateMetrics, 2000);
     loadGroups();
-    setInterval(loadGroups, 8000); // Poll VM table every 8s
+    setInterval(loadGroups, 8000);
   </script>
 </body>
 </html>

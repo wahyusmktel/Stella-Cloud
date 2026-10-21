@@ -112,214 +112,485 @@
   "students": [
     {
       "nis": "240101",
-      "name": "Siswa TKJ 01",
+      "name": "Siswa TKJ 1 - 01",
       "password": "smktelkom",
-      "groupId": 1,
-      "isPaired": true
+      "class": "XI-TKJ-1",
+      "groupId": null,
+      "isPaired": false
     },
     {
       "nis": "240102",
-      "name": "Siswa TKJ 02",
+      "name": "Siswa TKJ 1 - 02",
       "password": "smktelkom",
-      "groupId": 1,
-      "isPaired": true
+      "class": "XI-TKJ-1",
+      "groupId": null,
+      "isPaired": false
     },
     {
       "nis": "240103",
-      "name": "Siswa TKJ 03",
+      "name": "Siswa TKJ 1 - 03",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240104",
-      "name": "Siswa TKJ 04",
+      "name": "Siswa TKJ 1 - 04",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240105",
-      "name": "Siswa TKJ 05",
+      "name": "Siswa TKJ 1 - 05",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240106",
-      "name": "Siswa TKJ 06",
+      "name": "Siswa TKJ 1 - 06",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240107",
-      "name": "Siswa TKJ 07",
+      "name": "Siswa TKJ 1 - 07",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240108",
-      "name": "Siswa TKJ 08",
+      "name": "Siswa TKJ 1 - 08",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240109",
-      "name": "Siswa TKJ 09",
+      "name": "Siswa TKJ 1 - 09",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240110",
-      "name": "Siswa TKJ 10",
+      "name": "Siswa TKJ 1 - 10",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240111",
-      "name": "Siswa TKJ 11",
+      "name": "Siswa TKJ 1 - 11",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240112",
-      "name": "Siswa TKJ 12",
+      "name": "Siswa TKJ 1 - 12",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240113",
-      "name": "Siswa TKJ 13",
+      "name": "Siswa TKJ 1 - 13",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240114",
-      "name": "Siswa TKJ 14",
+      "name": "Siswa TKJ 1 - 14",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240115",
-      "name": "Siswa TKJ 15",
+      "name": "Siswa TKJ 1 - 15",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240116",
-      "name": "Siswa TKJ 16",
+      "name": "Siswa TKJ 1 - 16",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240117",
-      "name": "Siswa TKJ 17",
+      "name": "Siswa TKJ 1 - 17",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240118",
-      "name": "Siswa TKJ 18",
+      "name": "Siswa TKJ 1 - 18",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240119",
-      "name": "Siswa TKJ 19",
+      "name": "Siswa TKJ 1 - 19",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240120",
-      "name": "Siswa TKJ 20",
+      "name": "Siswa TKJ 1 - 20",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240121",
-      "name": "Siswa TKJ 21",
+      "name": "Siswa TKJ 1 - 21",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240122",
-      "name": "Siswa TKJ 22",
+      "name": "Siswa TKJ 1 - 22",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240123",
-      "name": "Siswa TKJ 23",
+      "name": "Siswa TKJ 1 - 23",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240124",
-      "name": "Siswa TKJ 24",
+      "name": "Siswa TKJ 1 - 24",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240125",
-      "name": "Siswa TKJ 25",
+      "name": "Siswa TKJ 1 - 25",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240126",
-      "name": "Siswa TKJ 26",
+      "name": "Siswa TKJ 1 - 26",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240127",
-      "name": "Siswa TKJ 27",
+      "name": "Siswa TKJ 1 - 27",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240128",
-      "name": "Siswa TKJ 28",
+      "name": "Siswa TKJ 1 - 28",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240129",
-      "name": "Siswa TKJ 29",
+      "name": "Siswa TKJ 1 - 29",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
       "groupId": null,
       "isPaired": false
     },
     {
       "nis": "240130",
-      "name": "Siswa TKJ 30",
+      "name": "Siswa TKJ 1 - 30",
       "password": "smktelkom",
+      "class": "XI-TKJ-1",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240201",
+      "name": "Siswa TKJ 2 - 01",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240202",
+      "name": "Siswa TKJ 2 - 02",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240203",
+      "name": "Siswa TKJ 2 - 03",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240204",
+      "name": "Siswa TKJ 2 - 04",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240205",
+      "name": "Siswa TKJ 2 - 05",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240206",
+      "name": "Siswa TKJ 2 - 06",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240207",
+      "name": "Siswa TKJ 2 - 07",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240208",
+      "name": "Siswa TKJ 2 - 08",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240209",
+      "name": "Siswa TKJ 2 - 09",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240210",
+      "name": "Siswa TKJ 2 - 10",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240211",
+      "name": "Siswa TKJ 2 - 11",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240212",
+      "name": "Siswa TKJ 2 - 12",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240213",
+      "name": "Siswa TKJ 2 - 13",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240214",
+      "name": "Siswa TKJ 2 - 14",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240215",
+      "name": "Siswa TKJ 2 - 15",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240216",
+      "name": "Siswa TKJ 2 - 16",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240217",
+      "name": "Siswa TKJ 2 - 17",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240218",
+      "name": "Siswa TKJ 2 - 18",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240219",
+      "name": "Siswa TKJ 2 - 19",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240220",
+      "name": "Siswa TKJ 2 - 20",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240221",
+      "name": "Siswa TKJ 2 - 21",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240222",
+      "name": "Siswa TKJ 2 - 22",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240223",
+      "name": "Siswa TKJ 2 - 23",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240224",
+      "name": "Siswa TKJ 2 - 24",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240225",
+      "name": "Siswa TKJ 2 - 25",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240226",
+      "name": "Siswa TKJ 2 - 26",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240227",
+      "name": "Siswa TKJ 2 - 27",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240228",
+      "name": "Siswa TKJ 2 - 28",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240229",
+      "name": "Siswa TKJ 2 - 29",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
+      "groupId": null,
+      "isPaired": false
+    },
+    {
+      "nis": "240230",
+      "name": "Siswa TKJ 2 - 30",
+      "password": "smktelkom",
+      "class": "XI-TKJ-2",
       "groupId": null,
       "isPaired": false
     }
   ],
-  "adminPin": "admin123"
+  "adminPin": "admin123",
+  "activeSession": "XI-TKJ-1"
 }

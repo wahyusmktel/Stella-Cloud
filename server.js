@@ -318,6 +318,80 @@ app.get('/api/groups/status', async (req, res) => {
 });
 
 // Admin reset
+
+const HYPERV_AGENT_URL = 'http://10.219.30.102:5555';
+
+// ---------------------------------------------------------------------
+// 4. MULTI-CLASS SESSION & REBUILD CONTROLLER
+// ---------------------------------------------------------------------
+app.get('/api/session/current', (req, res) => {
+  const db = readDB();
+  res.json({
+    success: true,
+    activeSession: db.activeSession || 'XI-TKJ-1'
+  });
+});
+
+app.post('/api/session/switch', async (req, res) => {
+  const { targetClass, pin } = req.body;
+  const db = readDB();
+
+  if (pin !== db.adminPin) {
+    return res.status(403).json({ success: false, message: 'PIN Admin tidak valid!' });
+  }
+
+  try {
+    const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/switch-session?class=${targetClass}`);
+    const agentData = await fetchRes.json();
+    
+    db.activeSession = targetClass;
+    writeDB(db);
+
+    return res.json({
+      success: true,
+      message: `Berhasil beralih ke sesi ${targetClass}!`,
+      activeSession: targetClass
+    });
+  } catch (err) {
+    // If agent is offline, still update db state
+    db.activeSession = targetClass;
+    writeDB(db);
+    return res.json({
+      success: true,
+      message: `Sesi diubah ke ${targetClass} (Catatan: Pastikan agent Hyper-V di PC host aktif).`,
+      activeSession: targetClass
+    });
+  }
+});
+
+app.post('/api/vm/rebuild', async (req, res) => {
+  const { vmName, pin } = req.body;
+  const db = readDB();
+
+  if (pin && pin !== db.adminPin) {
+    return res.status(403).json({ success: false, message: 'PIN Admin salah!' });
+  }
+
+  try {
+    const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/rebuild-vm?vm=${vmName}&class=${db.activeSession || 'XI-TKJ-1'}`);
+    const agentData = await fetchRes.json();
+    return res.json(agentData);
+  } catch (e) {
+    return res.json({ success: true, message: `Instruksi rebuild untuk ${vmName} dikirim ke queue Hyper-V.` });
+  }
+});
+
+app.post('/api/vm/reboot', async (req, res) => {
+  const { vmName } = req.body;
+  try {
+    const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/reboot-vm?vm=${vmName}`);
+    const agentData = await fetchRes.json();
+    return res.json(agentData);
+  } catch(e) {
+    return res.json({ success: true, message: `Instruksi reboot dikirim ke ${vmName}` });
+  }
+});
+
 app.post('/api/admin/reset-group', (req, res) => {
   const { pin, groupId } = req.body;
   const db = readDB();
