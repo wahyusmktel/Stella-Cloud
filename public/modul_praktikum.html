@@ -375,16 +375,16 @@
     <p>Setelah berhasil login ke terminal Ubuntu kelompok Anda via Web SSH Stella Cloud, langkah pertama adalah memperbarui repositori paket dan memasang web server Apache beserta runtime PHP.</p>
 
     <h3>Langkah 1: Cek Alamat IP &amp; Konektivitas Internet</h3>
-    <p>Pastikan server kelompok Anda telah menerima IP DHCP dan dapat terhubung ke internet:</p>
+    <p>Pastikan server kelompok Anda telah menerima IP DHCP dari sekolah dan dapat terhubung ke internet luar:</p>
     <div class="code-block">
       <div class="code-header"><span>BASH</span><span>1. Cek Alamat IP Lokal VM</span></div>
       <span class="code-cmd">ip</span> a
     </div>
     <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>2. Cek Koneksi Internet (Ping Google DNS)</span></div>
-      <span class="code-cmd">ping</span> -c 3 8.8.8.8
+      <div class="code-header"><span>BASH</span><span>2. Cek Koneksi Internet (Uji Respon Web)</span></div>
+      <span class="code-cmd">curl</span> -I google.com
     </div>
-    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Atau verifikasi web HTTP via curl: <code>curl -I https://google.com</code> &mdash; pastikan menulis 2 garis miring // tanpa spasi)</em></p>
+    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Jika muncul tulisan <code>HTTP/1.1 301 Moved Permanently</code>, tandanya server sudah terhubung ke internet).</em></p>
 
     <h3>Langkah 2: Tambah Repositori PPA PHP 7.4</h3>
     <p>
