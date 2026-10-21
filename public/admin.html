@@ -25,9 +25,36 @@
       border: 1px solid rgba(203, 213, 225, 0.8);
       box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
     }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 1.2s linear infinite;
+    }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 p-4 sm:p-6 lg:p-8">
+<body class="min-h-screen text-slate-800 p-4 sm:p-6 lg:p-8 relative">
+
+  <!-- FLOATING REAL-TIME OPERATION TOAST NOTIFICATION -->
+  <div id="operationToast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-150%] opacity-0 pointer-events-none max-w-md w-full">
+    <div class="bg-white border-2 border-cyan-500 shadow-2xl rounded-2xl p-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div id="toastSpinner" class="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600">
+          <svg class="w-5 h-5 animate-spin-slow" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
+        <div>
+          <div id="toastTitle" class="text-xs font-bold text-slate-900 font-mono tracking-tight uppercase">Operasi Berjalan</div>
+          <p id="toastMessage" class="text-[11px] text-slate-500 mt-0.5">Sedang mengeksekusi instruksi daya ke Hyper-V...</p>
+        </div>
+      </div>
+      <span id="toastTime" class="text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">LIVE</span>
+    </div>
+  </div>
+
   <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- Header Bar -->
@@ -43,14 +70,14 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring Guru</h1>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">CLOUD CONSOLE</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Manajemen daya VM (Start/Stop), sesi kelas (XI TKJ 1 / 2), dan instant rebuild.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Kontrol daya real-time (Start/Stop), sesi kelas, dan telemetri VM.</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-600 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Auto-Refresh: <strong class="text-slate-800">2s</strong></span>
+          <span id="pollIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="pollStatusText">Polling: <strong class="text-slate-800">2s</strong></span>
         </div>
         <a href="/" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition shadow-sm">
           Portal Siswa
@@ -87,11 +114,13 @@
           <p class="text-[11px] text-slate-400 mt-1">Nyalakan/matikan semua VM serentak.</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="powerAll('start-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 shadow-sm">
-            <span>▶️ Nyalakan Semua</span>
+          <button id="btnStartAll" onclick="powerAll('start-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 shadow-sm">
+            <span id="iconStartAll">▶️</span>
+            <span>Nyalakan Semua</span>
           </button>
-          <button onclick="powerAll('stop-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
-            <span>⏹️ Matikan Semua</span>
+          <button id="btnStopAll" onclick="powerAll('stop-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
+            <span id="iconStopAll">⏹️</span>
+            <span>Matikan Semua</span>
           </button>
         </div>
       </div>
@@ -121,7 +150,7 @@
           </div>
         </div>
         <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 140px; position: relative;">
+          <div style="height: 130px; position: relative;">
             <canvas id="cpuChart"></canvas>
           </div>
         </div>
@@ -148,23 +177,23 @@
           </div>
         </div>
         <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 140px; position: relative;">
+          <div style="height: 130px; position: relative;">
             <canvas id="memChart"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU & REBUILD & POWER -->
+    <!-- 15 VM GROUPS TABLE WITH LIVE TRANSITIONS -->
     <div class="cyber-card rounded-2xl overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
         <div>
           <h2 class="font-bold text-sm text-slate-800">Status 15 Server VM Siswa</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Kontrol daya (Nyalakan/Matikan), telemetri live, dan rebuild per kelompok.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Indikator transisi daya real-time dengan auto-refresh instan.</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="loadGroups()" class="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
-            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="refreshIcon" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             <span>Refresh</span>
@@ -178,11 +207,11 @@
             <tr>
               <th class="p-3.5">Kelompok</th>
               <th class="p-3.5">IP Server (VM)</th>
-              <th class="p-3.5">Status</th>
+              <th class="p-3.5">Status Power</th>
               <th class="p-3.5">RAM VM Siswa</th>
               <th class="p-3.5">CPU VM</th>
               <th class="p-3.5">Anggota Siswa</th>
-              <th class="p-3.5 text-right">Kontrol Instance</th>
+              <th class="p-3.5 text-right">Kontrol Daya</th>
             </tr>
           </thead>
           <tbody id="groupTableBody" class="divide-y divide-slate-100 font-mono">
@@ -196,6 +225,8 @@
 
   <script>
     let currentSession = 'XI-TKJ-1';
+    let pendingTransitions = {}; // vmName -> 'starting' | 'stopping' | 'rebuilding'
+    let fastPollTimer = null;
 
     const MAX_POINTS = 20;
     const timeLabels = Array(MAX_POINTS).fill('');
@@ -239,6 +270,50 @@
       options: chartOptions
     });
 
+    // Toast Notification Controller
+    function showToast(title, message, isSpinning = true) {
+      const toast = document.getElementById('operationToast');
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastMessage').textContent = message;
+      
+      const spinner = document.getElementById('toastSpinner');
+      if (isSpinning) {
+        spinner.innerHTML = `
+          <svg class="w-5 h-5 animate-spin-slow text-cyan-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>`;
+      } else {
+        spinner.innerHTML = `<span class="text-emerald-600 text-lg">✓</span>`;
+      }
+
+      toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+    }
+
+    function hideToast(delay = 2500) {
+      setTimeout(() => {
+        const toast = document.getElementById('operationToast');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-[-150%]', 'opacity-0');
+      }, delay);
+    }
+
+    // Fast Polling during transitions (1.2s instead of 8s)
+    function triggerFastPolling(durationSeconds = 12) {
+      document.getElementById('pollIndicator').className = 'w-2 h-2 rounded-full bg-cyan-500 animate-ping';
+      document.getElementById('pollStatusText').innerHTML = 'Sinkronisasi Cepat: <strong class="text-cyan-700">1.2s</strong>';
+
+      if (fastPollTimer) clearInterval(fastPollTimer);
+      fastPollTimer = setInterval(loadGroups, 1200);
+
+      setTimeout(() => {
+        clearInterval(fastPollTimer);
+        document.getElementById('pollIndicator').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        document.getElementById('pollStatusText').innerHTML = 'Polling: <strong class="text-slate-800">2s</strong>';
+      }, durationSeconds * 1000);
+    }
+
     async function checkSession() {
       try {
         const res = await fetch('/api/session/current');
@@ -269,6 +344,9 @@
       const pin = prompt(`Peralihan Sesi ke [${targetClass}]\nMasukkan PIN Admin Guru (Default: admin123):`);
       if (!pin) return;
 
+      showToast('Peralihan Sesi', `Menukar disk seluruh 15 VM ke profil ${targetClass}...`);
+      triggerFastPolling(15);
+
       try {
         const res = await fetch('/api/session/switch', {
           method: 'POST',
@@ -276,22 +354,30 @@
           body: JSON.stringify({ targetClass, pin })
         });
         const data = await res.json();
-        alert(data.message);
+        showToast('Selesai', `Sesi berhasil dialihkan ke ${targetClass}`, false);
+        hideToast();
         currentSession = targetClass;
         updateSessionUI();
         loadGroups();
       } catch(e) {
-        alert('Gagal menghubungi controller.');
+        showToast('Error', 'Gagal menghubungi controller agent.', false);
+        hideToast();
       }
     }
 
     async function togglePowerVM(vmName, action) {
-      const actionText = action === 'start' ? 'Menyalakan' : 'Mematikan';
+      const isStart = action === 'start';
       let pin = '';
-      if (action === 'stop') {
-        pin = prompt(`Konfirmasi ${actionText} [${vmName}]\nMasukkan PIN Admin Guru (Default: admin123):`);
+      if (!isStart) {
+        pin = prompt(`Konfirmasi Mematikan [${vmName}]\nMasukkan PIN Admin Guru (Default: admin123):`);
         if (!pin) return;
       }
+
+      // Set pending state visually
+      pendingTransitions[vmName] = isStart ? 'starting' : 'stopping';
+      showToast(isStart ? 'Menyalakan Mesin' : 'Mematikan Mesin', `Sedang memproses instruksi daya untuk ${vmName}...`);
+      loadGroups(); // Immediately redraw table with pending state
+      triggerFastPolling(8);
 
       try {
         const res = await fetch('/api/vm/power', {
@@ -300,17 +386,29 @@
           body: JSON.stringify({ vmName, action, pin })
         });
         const data = await res.json();
-        alert(data.message);
-        setTimeout(loadGroups, 2000);
+        showToast('Instruksi Terkirim', data.message || `Perintah daya ${vmName} dieksekusi.`, false);
+        hideToast(2000);
       } catch (e) {
-        alert('Gagal mengirim perintah daya.');
+        showToast('Error', 'Gagal mengirim perintah daya.', false);
+        hideToast();
       }
     }
 
     async function powerAll(action) {
-      const actionText = action === 'start-all' ? 'Menyalakan Seluruh 15 VM' : 'Mematikan Seluruh 15 VM';
+      const isStart = action === 'start-all';
+      const actionText = isStart ? 'Menyalakan Seluruh 15 VM' : 'Mematikan Seluruh 15 VM';
       const pin = prompt(`⚠️ KONFIRMASI DAYA MASSAL\n${actionText}\nMasukkan PIN Admin Guru (Default: admin123):`);
       if (!pin) return;
+
+      // Mark all VMs as transitioning
+      for (let i = 1; i <= 15; i++) {
+        const num = String(i).padStart(2, '0');
+        pendingTransitions[`TKJ-Kelompok-${num}`] = isStart ? 'starting' : 'stopping';
+      }
+
+      showToast(isStart ? 'Menyalakan Seluruh VM' : 'Mematikan Seluruh VM', `Memproses daya 15 VM secara paralel di Hyper-V...`);
+      loadGroups();
+      triggerFastPolling(15);
 
       try {
         const res = await fetch('/api/vm/power', {
@@ -319,16 +417,22 @@
           body: JSON.stringify({ action, pin })
         });
         const data = await res.json();
-        alert(data.message);
-        setTimeout(loadGroups, 4000);
+        showToast('Daya Massal Aktif', data.message || `Seluruh 15 VM sedang diproses.`, false);
+        hideToast(3000);
       } catch (e) {
-        alert('Gagal mengirim perintah daya massal.');
+        showToast('Error', 'Gagal mengirim instruksi daya massal.', false);
+        hideToast();
       }
     }
 
     async function rebuildVM(vmName) {
-      const pin = prompt(`⚡ FACTORY RESET INSTANCE [${vmName}]\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):`);
+      const pin = prompt(`⚡ FACTORY RESET [${vmName}]\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\nMasukkan PIN Admin Guru (Default: admin123):`);
       if (!pin) return;
+
+      pendingTransitions[vmName] = 'rebuilding';
+      showToast('Rebuilding OS', `Mereset ${vmName} ke master image kosongan bersih...`);
+      loadGroups();
+      triggerFastPolling(10);
 
       try {
         const res = await fetch('/api/vm/rebuild', {
@@ -337,10 +441,11 @@
           body: JSON.stringify({ vmName, pin })
         });
         const data = await res.json();
-        alert(data.message);
-        loadGroups();
+        showToast('Rebuild Selesai', data.message || `${vmName} berhasil dikosongkan.`, false);
+        hideToast(2500);
       } catch (e) {
-        alert('Gagal melakukan rebuild.');
+        showToast('Error', 'Gagal melakukan rebuild.', false);
+        hideToast();
       }
     }
 
@@ -376,9 +481,29 @@
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-slate-50/80 transition';
 
-          const statusBadge = g.isOnline 
-            ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">RUNNING</span>'
-            : '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px]">STOPPED</span>';
+          const pending = pendingTransitions[g.name];
+          
+          // Clear pending transition once live state matches expectation
+          if (pending === 'starting' && g.isOnline) {
+            delete pendingTransitions[g.name];
+          } else if (pending === 'stopping' && !g.isOnline) {
+            delete pendingTransitions[g.name];
+          } else if (pending === 'rebuilding' && g.isOnline) {
+            delete pendingTransitions[g.name];
+          }
+
+          let statusBadge = '';
+          if (pendingTransitions[g.name] === 'starting') {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>STARTING...</span>';
+          } else if (pendingTransitions[g.name] === 'stopping') {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>STOPPING...</span>';
+          } else if (pendingTransitions[g.name] === 'rebuilding') {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping"></span>REBUILDING...</span>';
+          } else if (g.isOnline) {
+            statusBadge = '<span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">RUNNING</span>';
+          } else {
+            statusBadge = '<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold">STOPPED</span>';
+          }
 
           const membersList = g.members.length > 0 
             ? g.members.join(', ')
@@ -387,9 +512,15 @@
           const m = g.metrics || { usedMB: 0, totalMB: 384, memPercent: 0, cpuPercent: 0 };
           const ramBarWidth = g.isOnline ? Math.min(100, Math.max(8, m.memPercent)) : 0;
 
-          const powerBtn = g.isOnline
-            ? `<button onclick="togglePowerVM('${g.name}', 'stop')" class="text-[11px] px-2 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition" title="Matikan Mesin">⏹️ Stop</button>`
-            : `<button onclick="togglePowerVM('${g.name}', 'start')" class="text-[11px] px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition" title="Nyalakan Mesin">▶️ Start</button>`;
+          // Power Button with loading state
+          let powerBtn = '';
+          if (pendingTransitions[g.name]) {
+            powerBtn = `<button disabled class="text-[11px] px-2.5 py-1 bg-slate-100 text-slate-400 border border-slate-200 rounded-lg cursor-not-allowed">⏳ Memproses...</button>`;
+          } else if (g.isOnline) {
+            powerBtn = `<button onclick="togglePowerVM('${g.name}', 'stop')" class="text-[11px] px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition shadow-sm font-semibold" title="Matikan Mesin">⏹️ Stop</button>`;
+          } else {
+            powerBtn = `<button onclick="togglePowerVM('${g.name}', 'start')" class="text-[11px] px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition shadow-sm font-semibold" title="Nyalakan Mesin">▶️ Start</button>`;
+          }
 
           tr.innerHTML = `
             <td class="p-3.5 font-bold text-slate-900">${g.name}</td>
