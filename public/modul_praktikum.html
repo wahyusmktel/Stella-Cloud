@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Modul Praktikum Cloud Computing XI TKJ</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    @page {
+      size: A4;
+      margin: 18mm 16mm 20mm 16mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 8pt;
+        color: #94a3b8;
+      }
+      @bottom-left {
+        content: "SMK Telkom Lampung • Cloud Computing XI TKJ";
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 9.5pt;
+      line-height: 1.55;
+      color: #1e293b;
+      background: #ffffff;
+    }
+
+    .page-break {
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    h1 { font-size: 20pt; line-height: 1.2; }
+    h2 { font-size: 13.5pt; margin-top: 14pt; margin-bottom: 6pt; color: #0284c7; border-bottom: 1.5pt solid #e0f2fe; padding-bottom: 4pt; }
+    h3 { font-size: 11pt; margin-top: 10pt; margin-bottom: 4pt; color: #0f172a; }
+    p { margin-bottom: 6pt; text-align: justify; }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Cover Page */
+    .cover-container {
+      height: 250mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10mm 5mm 5mm 5mm;
+      border: 2pt solid #0284c7;
+      border-radius: 12pt;
+      background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 4pt 10pt;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 9pt;
+      font-weight: 700;
+      border-radius: 20pt;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 15pt;
+    }
+
+    .cover-title {
+      font-size: 26pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.15;
+      margin-bottom: 10pt;
+    }
+
+    .cover-subtitle {
+      font-size: 12pt;
+      font-weight: 500;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 25pt;
+    }
+
+    .cover-card {
+      background: #ffffff;
+      border: 1pt solid #cbd5e1;
+      border-radius: 10pt;
+      padding: 14pt;
+      box-shadow: 0 4pt 12pt rgba(0,0,0,0.04);
+      margin-bottom: 15pt;
+    }
+
+    .cover-footer {
+      border-top: 1pt solid #cbd5e1;
+      padding-top: 12pt;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    /* Badges & Pills */
+    .badge {
+      display: inline-block;
+      padding: 2pt 6pt;
+      border-radius: 4pt;
+      font-size: 8pt;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-cyan { background: #e0f2fe; color: #0369a1; border: 0.5pt solid #bae6fd; }
+    .badge-amber { background: #fef3c7; color: #b45309; border: 0.5pt solid #fde68a; }
+    .badge-emerald { background: #d1fae5; color: #047857; border: 0.5pt solid #a7f3d0; }
+
+    /* Code & Terminal Blocks */
+    .code-block {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 6pt;
+      padding: 8pt 10pt;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      line-height: 1.45;
+      margin: 6pt 0 8pt 0;
+      border: 1pt solid #1e293b;
+      position: relative;
+    }
+
+    .code-header {
+      font-size: 7.5pt;
+      color: #94a3b8;
+      border-bottom: 0.5pt solid #334155;
+      padding-bottom: 4pt;
+      margin-bottom: 5pt;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-cmd {
+      color: #38bdf8;
+    }
+    .code-param {
+      color: #a5f3fc;
+    }
+    .code-comment {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* UI Mockup Box */
+    .ui-mockup {
+      border: 1pt solid #cbd5e1;
+      border-radius: 8pt;
+      background: #ffffff;
+      overflow: hidden;
+      margin: 8pt 0;
+      box-shadow: 0 2pt 8pt rgba(15,23,42,0.04);
+    }
+    .ui-header {
+      background: #f1f5f9;
+      border-bottom: 1pt solid #e2e8f0;
+      padding: 4pt 8pt;
+      display: flex;
+      align-items: center;
+      gap: 4pt;
+    }
+    .ui-dot { width: 6pt; height: 6pt; border-radius: 50%; display: inline-block; }
+    .ui-body { padding: 10pt; font-size: 8.5pt; }
+
+    /* Alert / Notes */
+    .alert {
+      padding: 7pt 10pt;
+      border-radius: 6pt;
+      margin: 7pt 0;
+      font-size: 8.5pt;
+      display: flex;
+      gap: 6pt;
+    }
+    .alert-info { background: #f0f9ff; border: 1pt solid #bae6fd; color: #0369a1; }
+    .alert-warning { background: #fffbeb; border: 1pt solid #fef3c7; color: #92400e; }
+    .alert-tip { background: #ecfdf5; border: 1pt solid #a7f3d0; color: #065f46; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8pt 0;
+      font-size: 8.5pt;
+    }
+    th, td {
+      border: 1pt solid #cbd5e1;
+      padding: 5pt 7pt;
+      text-align: left;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    ol, ul {
+      margin-left: 14pt;
+      margin-bottom: 6pt;
+    }
+    li {
+      margin-bottom: 3pt;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14pt;
+      height: 14pt;
+      border-radius: 50%;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 8pt;
+      font-weight: 700;
+      margin-right: 4pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HALAMAN 1: COVER ==================== -->
+  <div class="cover-container page-break">
+    <div>
+      <div class="cover-badge">Kurikulum Teknik Komputer & Jaringan</div>
+      <div class="cover-title">MODUL PRAKTIKUM<br>CLOUD COMPUTING</div>
+      <div class="cover-subtitle">
+        Implementasi Private Cloud Storage (OwnCloud) Berbasis SQLite &amp; Integrasi Cloudflare Tunnel pada Infrastruktur Terpusat Stella Cloud
+      </div>
+
+      <div class="cover-card">
+        <h4 style="margin-bottom: 6pt; color: #0284c7;">🎯 Capaian &amp; Target Kompetensi</h4>
+        <ul style="margin-left: 12pt; font-size: 9pt; color: #334155;">
+          <li>Memahami konsep virtualisasi server terpusat &amp; arsitektur Private Cloud.</li>
+          <li>Mengakses dan mengelola sistem Linux Server (Ubuntu) via In-Browser Web SSH.</li>
+          <li>Mengkonfigurasi Web Server Apache2 &amp; Runtime PHP untuk layanan cloud storage.</li>
+          <li>Mendeploy aplikasi OwnCloud menggunakan SQLite (arsitektur hemat RAM).</li>
+          <li>Menghubungkan server lokal ke jaringan global menggunakan Cloudflare Zero Trust Tunnel.</li>
+        </ul>
+      </div>
+
+      <div class="cover-card" style="background: #f8fafc;">
+        <h4 style="margin-bottom: 6pt; color: #0f172a;">👥 Sasaran Praktikan</h4>
+        <p style="font-size: 8.5pt; color: #64748b; margin: 0;">
+          Siswa Kelas XI TKJ 1 dan XI TKJ 2 — SMK Telkom Lampung.<br>
+          Metode Praktikum: <strong>Pair Programming (Driver &amp; Navigator)</strong> pada 15 Virtual Machine mandiri.
+        </p>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <div>
+        <p style="font-size: 8pt; color: #94a3b8; margin: 0;">Platform Laboratorium:</p>
+        <p style="font-size: 10pt; font-weight: 700; color: #0f172a; margin: 0;">STELLA CLOUD (cloud.smktelkom-lpg.id)</p>
+      </div>
+      <div style="text-align: right;">
+        <p style="font-size: 8pt; color: #94a3b8; margin: 0;">SMK TELKOM LAMPUNG</p>
+        <p style="font-size: 8.5pt; font-weight: 600; color: #475569; margin: 0;">Tahun Ajaran 2026/2027</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HALAMAN 2: BAB I & II ==================== -->
+  <div>
+    <h2>BAB I: Pendahuluan &amp; Topologi Sistem</h2>
+    <p>
+      Pada kegiatan praktikum ini, laboratorium komputer SMK Telkom Lampung menerapkan arsitektur <strong>Centralized Private Cloud</strong>. Alih-alih menjalankan VirtualBox yang berat pada masing-masing PC lab (Core i3, RAM 4GB), beban komputasi ditarik secara terpusat ke server hypervisor berkinerja tinggi.
+    </p>
+
+    <!-- Topologi Diagram Mockup -->
+    <div class="ui-mockup">
+      <div class="ui-header">
+        <span class="ui-dot" style="background:#f43f5e;"></span>
+        <span class="ui-dot" style="background:#fbbf24;"></span>
+        <span class="ui-dot" style="background:#10b981;"></span>
+        <span class="font-mono" style="font-size: 7.5pt; color: #64748b; margin-left: 4pt;">Topologi Infrastruktur Stella Cloud</span>
+      </div>
+      <div class="ui-body" style="background: #f8fafc; font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; line-height: 1.4;">
+        [ PC Klien Siswa di Lab / Laptop / HP ] ──(Browser Chrome/Edge)──&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ Portal Stella Cloud: https://cloud.smktelkom-lpg.id (Port 4000) ]<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ (WebSocket SSH Stream)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌───────────────────────────────────────────┴───────────────────────────────────────────┐<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+        &nbsp;&nbsp;[ Kelompok 01 (10.219.30.84) ]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ Kelompok 02 (10.219.30.86) ] ... [ Kelompok 15 (10.219.30.109) ]
+      </div>
+    </div>
+
+    <h2>BAB II: Akses Virtual Lab (Stella Cloud)</h2>
+    <p>Siswa mengakses terminal Linux Ubuntu tanpa perlu menginstal aplikasi PuTTY ataupun terminal emulator tambahan.</p>
+
+    <div style="margin-bottom: 8pt;">
+      <p><strong><span class="step-num">1</span> Buka Portal Praktikum:</strong></p>
+      <p>Buka web browser dan arahkan ke: <span class="badge badge-cyan">https://cloud.smktelkom-lpg.id</span></p>
+    </div>
+
+    <!-- UI Mockup Login -->
+    <div class="ui-mockup">
+      <div class="ui-header">
+        <span class="ui-dot" style="background:#f43f5e;"></span>
+        <span class="ui-dot" style="background:#fbbf24;"></span>
+        <span class="ui-dot" style="background:#10b981;"></span>
+        <span class="font-mono" style="font-size: 7.5pt; color: #475569;">https://cloud.smktelkom-lpg.id — Single Sign-On</span>
+      </div>
+      <div class="ui-body" style="padding: 12pt;">
+        <div style="max-width: 300pt; margin: 0 auto; border: 1pt solid #cbd5e1; border-radius: 6pt; padding: 10pt; background: #ffffff;">
+          <div style="font-weight: 700; font-size: 10pt; margin-bottom: 4pt;">Masuk ke Virtual Lab</div>
+          <div style="font-size: 7.5pt; color: #64748b; margin-bottom: 8pt;">Gunakan NIS yang telah didaftarkan guru pengampu.</div>
+          <div style="background: #f8fafc; border: 1pt solid #e2e8f0; padding: 4pt 6pt; border-radius: 4pt; font-family: monospace; font-size: 8pt; margin-bottom: 6pt;">
+            NIS: 240101 (Contoh)
+          </div>
+          <div style="background: #f8fafc; border: 1pt solid #e2e8f0; padding: 4pt 6pt; border-radius: 4pt; font-family: monospace; font-size: 8pt; margin-bottom: 8pt;">
+            Password: •••••••••••• (Default: smktelkom)
+          </div>
+          <div style="background: #0f172a; color: white; text-align: center; padding: 4pt; border-radius: 4pt; font-size: 8pt; font-weight: 600;">
+            Masuk ke Lab
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 8pt;">
+      <p><strong><span class="step-num">2</span> Setup Pasangan Kelompok (First Login):</strong></p>
+      <p>
+        Pada saat pertama kali login, siswa diminta memilih <strong>Rekan 1 Kelompok</strong> dari dropdown. Setelah dikonfirmasi, sistem otomatis mengalokasikan 1 Server VM khusus untuk kelompok Anda.
+      </p>
+      <div class="alert alert-info">
+        <span>ℹ️</span>
+        <div><strong>Aturan Kelompok:</strong> 1 Server dikelola bersama oleh 2 siswa. Satu siswa bertindak sebagai <em>Driver</em> (mengetik perintah) dan satu siswa sebagai <em>Navigator</em> (membaca panduan dan memeriksa hasil).</div>
+      </div>
+    </div>
+
+    <div>
+      <p><strong><span class="step-num">3</span> Membuka Web Terminal &amp; Memantau Telemetri VM:</strong></p>
+      <p>
+        Di halaman dashboard kelompok Anda, klik tombol <strong>"Buka Web Terminal"</strong>. Layar hitam terminal Linux interaktif akan langsung terhubung ke IP VM kelompok Anda. Perhatikan indikator <strong>RAM VM</strong> dan <strong>CPU VM</strong> di pojok kanan atas yang bergerak secara real-time!
+      </p>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== HALAMAN 3: BAB III & IV ==================== -->
+  <div>
+    <h2>BAB III: Persiapan Server &amp; Instalasi Web Server</h2>
+    <p>Setelah berhasil login ke terminal Ubuntu kelompok Anda via Web SSH Stella Cloud, langkah pertama adalah memperbarui repositori paket dan memasang web server Apache beserta runtime PHP.</p>
+
+    <h3>Langkah 1: Cek Alamat IP &amp; Konektivitas Internet</h3>
+    <p>Pastikan server kelompok Anda telah menerima IP DHCP dari sekolah dan dapat mengakses DNS internet:</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Cek Jaringan &amp; Koneksi</span></div>
+      <span class="code-cmd">ip</span> a<br>
+      <span class="code-cmd">curl</span> -I https://google.com
+    </div>
+
+    <h3>Langkah 2: Tambah Repositori PPA PHP 7.4</h3>
+    <p>
+      Sistem operasi Ubuntu 22.04 LTS membawa PHP 8.1 secara bawaan. Dikarenakan arsitektur aplikasi <strong>OwnCloud 10</strong> membutuhkan runtime <strong>PHP 7.4</strong> yang stabil dan kompatibel penuh, kita tambahkan repositori resmi PPA Ondřej Surý:
+    </p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Update Paket &amp; Tambah PPA PHP</span></div>
+      <span class="code-cmd">sudo apt</span> update<br>
+      <span class="code-cmd">sudo apt install</span> -y software-properties-common<br>
+      <span class="code-cmd">sudo add-apt-repository</span> -y ppa:ondrej/php<br>
+      <span class="code-cmd">sudo apt</span> update
+    </div>
+
+    <h3>Langkah 3: Instalasi Apache2 Web Server &amp; Ekstensi PHP 7.4</h3>
+    <p>
+      Pasang Apache web server bersama modul PHP 7.4 lengkap beserta driver basis data SQLite3:
+    </p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Instalasi Apache &amp; Ekstensi PHP 7.4</span></div>
+      <span class="code-cmd">sudo apt install</span> -y apache2 libapache2-mod-php7.4 php7.4 php7.4-cli \<br>
+      php7.4-common php7.4-sqlite3 php7.4-curl php7.4-gd php7.4-mbstring \<br>
+      php7.4-xml php7.4-zip php7.4-intl unzip bzip2
+    </div>
+
+    <div class="alert alert-tip">
+      <span>💡</span>
+      <div><strong>Pantau Telemetri:</strong> Saat proses instalasi paket di atas berjalan, lihat widget <em>RAM VM</em> dan <em>CPU VM</em> di pojok dashboard Stella Cloud Anda. Anda akan melihat grafik utilisasi bergerak real-time!</div>
+    </div>
+
+    <h2>BAB IV: Deployment OwnCloud (Mode Hemat RAM via SQLite)</h2>
+    <p>
+      <strong>Kenapa Menggunakan SQLite?</strong> Database MySQL/MariaDB membutuhkan alokasi memori background sekitar 300–400 MB RAM. Dengan memilih <strong>SQLite</strong>, database disimpan langsung sebagai file lokal sehingga konsumsi RAM background adalah <strong>0 MB</strong> (Server hanya mengonsumsi ~150 MB RAM total).
+    </p>
+
+    <h3>Langkah 1: Unduh &amp; Ekstrak Paket Resmi OwnCloud</h3>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Download &amp; Ekstrak Source OwnCloud</span></div>
+      <span class="code-cmd">cd</span> /tmp<br>
+      <span class="code-cmd">wget</span> -c https://download.owncloud.com/server/stable/owncloud-complete-latest.tar.bz2<br>
+      <span class="code-cmd">sudo tar</span> -xjf owncloud-complete-latest.tar.bz2 -C /var/www/
+    </div>
+
+    <h3>Langkah 2: Konfigurasi Hak Akses (Permissions)</h3>
+    <p>Web server Apache berjalan dengan user sistem <code class="badge badge-cyan">www-data</code>. Berikan hak kepemilikan folder ke user tersebut:</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Set Ownership &amp; Permissions</span></div>
+      <span class="code-cmd">sudo chown</span> -R www-data:www-data /var/www/owncloud/<br>
+      <span class="code-cmd">sudo chmod</span> -R 755 /var/www/owncloud/
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== HALAMAN 4: BAB V ==================== -->
+  <div>
+    <h2>BAB V: Konfigurasi Virtual Host &amp; Uji Akses Lokal</h2>
+    <p>Langkah berikutnya adalah membuat berkas konfigurasi Virtual Host Apache agar server dapat langsung melayani permintaan web OwnCloud.</p>
+
+    <h3>Langkah 1: Buat Konfigurasi Apache Virtual Host</h3>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Membuat File Konfigurasi</span></div>
+      <span class="code-cmd">sudo nano</span> /etc/apache2/sites-available/owncloud.conf
+    </div>
+    <p>Salin dan tempelkan konfigurasi berikut ke dalam editor nano:</p>
+    <div class="code-block">
+      <div class="code-header"><span>APACHE CONFIG</span><span>/etc/apache2/sites-available/owncloud.conf</span></div>
+      &lt;VirtualHost *:80&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;ServerAdmin admin@smktelkom-lpg.sch.id<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;DocumentRoot /var/www/owncloud<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;ServerName owncloud.local<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;Directory /var/www/owncloud/&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Options +FollowSymlinks<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AllowOverride All<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Require all granted<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Directory&gt;<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;ErrorLog ${APACHE_LOG_DIR}/owncloud_error.log<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;CustomLog ${APACHE_LOG_DIR}/owncloud_access.log combined<br>
+      &lt;/VirtualHost&gt;
+    </div>
+    <p class="font-mono text-[8pt] text-slate-500"><em>Simpan file dengan menekan <strong>Ctrl + O</strong> lalu <strong>Enter</strong>, kemudian keluar dengan <strong>Ctrl + X</strong>.</em></p>
+
+    <h3>Langkah 2: Aktifkan Modul Rewrite &amp; Virtual Host</h3>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Aktivasi Konfigurasi &amp; Restart Apache</span></div>
+      <span class="code-cmd">sudo a2enmod</span> rewrite headers env dir mime<br>
+      <span class="code-cmd">sudo a2dissite</span> 000-default.conf<br>
+      <span class="code-cmd">sudo a2ensite</span> owncloud.conf<br>
+      <span class="code-cmd">sudo systemctl</span> restart apache2
+    </div>
+
+    <h3>Langkah 3: Inisialisasi Database SQLite &amp; Akun Admin</h3>
+    <p>Inisialisasi dapat dijalankan sangat cepat via CLI terminal menggunakan utilitas <code class="badge badge-cyan">occ</code>:</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Inisialisasi Instan via OCC</span></div>
+      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ maintenance:install \<br>
+      &nbsp;&nbsp;--database "sqlite" --admin-user "admin" --admin-pass "smktelkom"<br>
+      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 1 --value="*"
+    </div>
+    <p><em>(Atau buka browser ke <code>http://10.219.30.xx/</code> untuk menyelesaikan via antarmuka grafis Web Wizard).</em></p>
+
+    <!-- UI Mockup OwnCloud Setup Wizard -->
+    <div class="ui-mockup">
+      <div class="ui-header">
+        <span class="ui-dot" style="background:#f43f5e;"></span>
+        <span class="ui-dot" style="background:#fbbf24;"></span>
+        <span class="ui-dot" style="background:#10b981;"></span>
+        <span class="font-mono" style="font-size: 7.5pt; color: #475569;">http://10.219.30.xx/ — Layar Login OwnCloud Aktif</span>
+      </div>
+      <div class="ui-body" style="background: #1e293b; color: white; padding: 12pt; text-align: center;">
+        <div style="font-weight: 800; font-size: 14pt; letter-spacing: 0.05em; color: #38bdf8; margin-bottom: 8pt;">ownCloud</div>
+        <div style="max-width: 220pt; margin: 0 auto; background: white; color: #1e293b; padding: 10pt; border-radius: 6pt; text-align: left; font-size: 8pt;">
+          <label style="font-weight: 600;">Username:</label>
+          <input type="text" value="admin" disabled style="width: 100%; padding: 3pt; border: 1pt solid #cbd5e1; margin-bottom: 4pt; border-radius: 3pt; font-family: monospace;">
+          <label style="font-weight: 600;">Password:</label>
+          <input type="password" value="smktelkom" disabled style="width: 100%; padding: 3pt; border: 1pt solid #cbd5e1; margin-bottom: 8pt; border-radius: 3pt;">
+          <button style="margin-top: 4pt; width: 100%; background: #0284c7; color: white; border: none; padding: 5pt; border-radius: 3pt; font-weight: 600;">Masuk ke Cloud Storage</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span>⚠️</span>
+      <div><strong>PENTING:</strong> Pastikan Anda memilih opsi database <strong>SQLite</strong>. Masukkan username dan password admin yang mudah Anda ingat bersama rekan kelompok Anda!</div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== HALAMAN 5: BAB VI ==================== -->
+  <div>
+    <h2>BAB VI: Integrasi Cloudflare Tunnel (Akses Internet)</h2>
+    <p>
+      Tahap akhir yang paling menarik dari praktikum ini adalah menghubungkan server lokal kelompok Anda ke internet publik tanpa memerlukan IP Publik statis ataupun setting port-forwarding di router sekolah, menggunakan teknologi <strong>Cloudflare Zero Trust Tunnel</strong>!
+    </p>
+
+    <h3>Langkah 1: Unduh Binary Cloudflared di Server</h3>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Download &amp; Install Package Cloudflared</span></div>
+      <span class="code-cmd">cd</span> /tmp<br>
+      <span class="code-cmd">curl</span> -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb<br>
+      <span class="code-cmd">sudo dpkg</span> -i cloudflared.deb
+    </div>
+
+    <h3>Langkah 2: Menjalankan Quick Tunnel Publik (Instan)</h3>
+    <p>
+      Cloudflared memiliki fitur <strong>Quick Tunnel</strong> gratis yang secara otomatis memberikan alamat domain publik aman (HTTPS) dengan akhiran <code class="badge badge-cyan">*.trycloudflare.com</code>:
+    </p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Jalankan Quick Tunnel</span></div>
+      <span class="code-cmd">cloudflared tunnel</span> --url http://localhost:80
+    </div>
+
+    <!-- UI Mockup Output Tunnel URL -->
+    <div class="ui-mockup">
+      <div class="ui-header">
+        <span class="ui-dot" style="background:#f43f5e;"></span>
+        <span class="ui-dot" style="background:#fbbf24;"></span>
+        <span class="ui-dot" style="background:#10b981;"></span>
+        <span class="font-mono" style="font-size: 7.5pt; color: #475569;">Terminal Output — URL Publik Tunnel</span>
+      </div>
+      <div class="ui-body" style="background: #0f172a; color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-size: 8pt; line-height: 1.4;">
+        +--------------------------------------------------------------------------------------------+<br>
+        |&nbsp;&nbsp;Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):&nbsp;&nbsp;|<br>
+        |&nbsp;&nbsp;<span style="color: #38bdf8; font-weight: 700;">https://random-subdomain-1234.trycloudflare.com</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <br>
+        +--------------------------------------------------------------------------------------------+
+      </div>
+    </div>
+
+    <h3>Langkah 3: Konfigurasi Trusted Domains pada OwnCloud</h3>
+    <p>
+      Secara default, OwnCloud akan memblokir akses jika dibuka melalui domain baru demi keamanan. Agar URL Cloudflare Tunnel diizinkan, jalankan perintah instan berikut via CLI:
+    </p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>Izinkan Semua Domain Tunnel (Instan)</span></div>
+      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 2 --value="*"
+    </div>
+    <p><em>(Atau jika ingin manual via editor: <code>sudo nano /var/www/owncloud/config/config.php</code> lalu tambahkan domain tunnel pada bagian <code>'trusted_domains'</code>).</em></p>
+
+    <h3>Langkah 4: Pengujian Akses Internet dari Smartphone</h3>
+    <ol>
+      <li>Matikan sambungan Wi-Fi di smartphone Anda dan beralihlah ke <strong>Paket Data Seluler (Internet Luar)</strong>.</li>
+      <li>Ketikkan URL <code class="badge badge-cyan">https://random-subdomain-1234.trycloudflare.com</code> di browser HP Anda.</li>
+      <li>Login menggunakan akun admin OwnCloud yang tadi Anda buat.</li>
+      <li>Coba lakukan <strong>Upload 1 File Foto</strong> dari galeri HP Anda ke server OwnCloud!</li>
+    </ol>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== HALAMAN 6: EVALUASI & LEMBAR KERJA ==================== -->
+  <div>
+    <h2>BAB VII: Lembar Kerja &amp; Rubrik Penilaian</h2>
+    <p>Isilah formulir laporan praktikum ini bersama rekan kelompok Anda untuk diserahkan kepada guru pengampu.</p>
+
+    <div class="cover-card" style="margin-top: 8pt; padding: 10pt;">
+      <table style="border: none; margin: 0;">
+        <tr style="border: none;"><td style="border: none; width: 30%;"><strong>Nama Kelompok</strong></td><td style="border: none;">: TKJ-Kelompok-......</td></tr>
+        <tr style="border: none;"><td style="border: none;"><strong>Alamat IP VM</strong></td><td style="border: none;">: 10.219.30........</td></tr>
+        <tr style="border: none;"><td style="border: none;"><strong>Nama Siswa 1 (Driver)</strong></td><td style="border: none;">: ..................................................... (NIS: .....................)</td></tr>
+        <tr style="border: none;"><td style="border: none;"><strong>Nama Siswa 2 (Navigator)</strong></td><td style="border: none;">: ..................................................... (NIS: .....................)</td></tr>
+        <tr style="border: none;"><td style="border: none;"><strong>URL Cloudflare Tunnel</strong></td><td style="border: none;">: https://...........................................................................</td></tr>
+      </table>
+    </div>
+
+    <h3>Tabel Checklist Unjuk Kerja Praktikum:</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 8%;">No</th>
+          <th style="width: 52%;">Indikator Keberhasilan Tugas</th>
+          <th style="width: 20%; text-align: center;">Status</th>
+          <th style="width: 20%; text-align: center;">Paraf Guru</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align: center;">1</td>
+          <td>Berhasil login ke portal Stella Cloud &amp; menghubungkan pasangan kelompok</td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">2</td>
+          <td>Web server Apache2 &amp; modul PHP terpasang serta berstatus <em>active (running)</em></td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">3</td>
+          <td>Paket OwnCloud diekstrak dan permission direktori <code class="font-mono">www-data</code> terpasang</td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">4</td>
+          <td>OwnCloud dapat dibuka melalui IP lokal lab dan wizard SQLite selesai</td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">5</td>
+          <td>Cloudflare Tunnel aktif dan OwnCloud dapat diakses via internet dari HP</td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="text-align: center;">6</td>
+          <td>Berhasil upload file dokumen/gambar ke penyimpanan OwnCloud melalui HP</td>
+          <td style="text-align: center;">[ &nbsp; ] Tuntas</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top: 14pt;">Catatan Evaluasi Guru Pengampu:</h3>
+    <div style="border: 1pt solid #cbd5e1; border-radius: 6pt; height: 75pt; padding: 6pt; background: #f8fafc; font-size: 8pt; color: #64748b;">
+      Catatan kedisiplinan, efisiensi konfigurasi, dan pemecahan kendala praktikum...
+    </div>
+
+    <div style="margin-top: 25pt; display: flex; justify-content: space-between; text-align: center;">
+      <div style="width: 40%;">
+        <p style="font-size: 8.5pt;">Mengetahui / Menyetujui,<br><strong>Guru Pengampu Cloud Computing</strong></p>
+        <div style="height: 40pt;"></div>
+        <p style="font-weight: 700; border-bottom: 1pt solid #0f172a; display: inline-block; padding: 0 15pt;">Wahyu Rahmat Hidayat, S.Kom</p>
+        <p style="font-size: 7.5pt; color: #64748b;">SMK Telkom Lampung</p>
+      </div>
+
+      <div style="width: 40%;">
+        <p style="font-size: 8.5pt;">Lampung Selatan, .............................. 2026<br><strong>Perwakilan Kelompok</strong></p>
+        <div style="height: 40pt;"></div>
+        <p style="font-weight: 700; border-bottom: 1pt solid #0f172a; display: inline-block; padding: 0 25pt;">( ................................................. )</p>
+        <p style="font-size: 7.5pt; color: #64748b;">NIS: .......................................</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
