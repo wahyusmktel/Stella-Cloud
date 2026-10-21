@@ -1,27 +1,21 @@
 # =====================================================================
 # STELLA HYPER-V CONTROLLER AGENT (Port 5555)
-# Micro-service untuk Multi-Class Profile Switcher & Instant Rebuild & Power
 # =====================================================================
+
+Write-Host "[1/4] Mengatur Windows Firewall untuk Port 5555..." -ForegroundColor Cyan
+netsh advfirewall firewall delete rule name="StellaPort5555" >$null 2>&1
+netsh advfirewall firewall add rule name="StellaPort5555" dir=in action=allow protocol=TCP localport=5555 profile=any >$null 2>&1
 
 $masterVHD = "C:\ProgramData\Microsoft\Windows\Virtual Hard Disks\Ubuntu-Master.vhdx"
 $baseDir = "C:\VM-Siswa"
 $dirTKJ1 = "$baseDir\XI-TKJ-1"
 $dirTKJ2 = "$baseDir\XI-TKJ-2"
 
-# 1. Pastikan struktur folder profil kelas tersedia
+Write-Host "[2/4] Menyiapkan direktori profil kelas..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $dirTKJ1 | Out-Null
 New-Item -ItemType Directory -Force -Path $dirTKJ2 | Out-Null
 
-# 2. Pindahkan VHDX yang ada saat ini ke folder XI-TKJ-1 jika belum dipindah
-Get-ChildItem -Path $baseDir -Filter "TKJ-Kelompok-*.vhdx" | ForEach-Object {
-    $targetPath = "$dirTKJ1\$($_.Name)"
-    if (-not (Test-Path $targetPath)) {
-        Move-Item -Path $_.FullName -Destination $targetPath -Force
-        Write-Host "Memindahkan $($_.Name) ke XI-TKJ-1" -ForegroundColor Yellow
-    }
-}
-
-# 3. Siapkan differencing disk bersih untuk XI-TKJ-2 jika belum ada
+Write-Host "[3/4] Menyiapkan disk cadangan XI-TKJ-2..." -ForegroundColor Cyan
 1..15 | ForEach-Object {
     $num = "{0:D2}" -f $_
     $vmName = "TKJ-Kelompok-$num"
@@ -29,11 +23,9 @@ Get-ChildItem -Path $baseDir -Filter "TKJ-Kelompok-*.vhdx" | ForEach-Object {
     
     if (-not (Test-Path $vhdTKJ2)) {
         New-VHD -ParentPath $masterVHD -Path $vhdTKJ2 -Differencing | Out-Null
-        Write-Host "[INIT] Membuat disk bersih untuk XI-TKJ-2: $vmName" -ForegroundColor Cyan
     }
 }
 
-# 4. Fungsi Switch Sesi Kelas
 function Switch-ClassSession($targetClass) {
     $targetDir = if ($targetClass -eq "XI-TKJ-2") { $dirTKJ2 } else { $dirTKJ1 }
     Write-Host "[SWITCH] Menukar disk 15 VM ke sesi: $targetClass..." -ForegroundColor Yellow
@@ -56,7 +48,6 @@ function Switch-ClassSession($targetClass) {
     return "Berhasil beralih ke sesi $targetClass"
 }
 
-# 5. Fungsi Rebuild VM Instan
 function Rebuild-VMInstance($vmName, $targetClass) {
     $targetDir = if ($targetClass -eq "XI-TKJ-2") { $dirTKJ2 } else { $dirTKJ1 }
     $vhdPath = "$targetDir\$vmName.vhdx"
@@ -85,7 +76,7 @@ try {
     $listener.Start()
     Write-Host "`n=======================================================" -ForegroundColor Green
     Write-Host " STELLA HYPER-V CONTROLLER AKTIF DI PORT 5555" -ForegroundColor Green
-    Write-Host " Siap menerima perintah Switch Kelas, Rebuild & Power" -ForegroundColor Green
+    Write-Host " Siap menerima perintah Start, Shutdown, Rebuild & Sesi" -ForegroundColor Green
     Write-Host "=======================================================`n" -ForegroundColor Green
 } catch {
     Write-Host "Gagal menyalakan listener di port 5555: $_" -ForegroundColor Red
@@ -115,8 +106,6 @@ while ($listener.IsListening) {
             $msg = Switch-ClassSession $targetClass
             $currentSession = $targetClass
             $resObj = @{ success = $true; message = $msg; currentSession = $currentSession }
-        } else {
-            $resObj = @{ success = $false; message = "Parameter class tidak valid." }
         }
     }
     elseif ($url -match "/api/rebuild-vm") {
@@ -127,8 +116,6 @@ while ($listener.IsListening) {
         if ($vmName) {
             $msg = Rebuild-VMInstance $vmName $cls
             $resObj = @{ success = $true; message = $msg }
-        } else {
-            $resObj = @{ success = $false; message = "Nama VM diperlukan" }
         }
     }
     elseif ($url -match "/api/power-vm") {
@@ -163,13 +150,6 @@ while ($listener.IsListening) {
                 Stop-VM -Name "TKJ-Kelompok-$num" -TurnOff -ErrorAction SilentlyContinue
             }
             $resObj = @{ success = $true; message = "Semua 15 VM berhasil dimatikan" }
-        }
-    }
-    elseif ($url -match "/api/reboot-vm") {
-        $vmName = $request.QueryString["vm"]
-        if ($vmName) {
-            Restart-VM -Name $vmName -Force -ErrorAction SilentlyContinue
-            $resObj = @{ success = $true; message = "$vmName berhasil direstart" }
         }
     }
 
