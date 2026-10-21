@@ -17,12 +17,12 @@ echo  MEMASANG STELLA HYPER-V CONTROLLER SEBAGAI SERVICE
 echo ========================================================
 echo.
 
-:: 1. Atur Firewall Port 5555 & URL ACL Reservation
-echo [1/4] Mengatur Windows Firewall & HTTP Access Port 5555...
+:: 1. Atur Firewall Port 5555 dan HTTP URL ACL
+echo [1/4] Mengatur Windows Firewall dan HTTP Access Port 5555...
 netsh advfirewall firewall delete rule name="StellaPort5555" >nul 2>&1
 netsh advfirewall firewall add rule name="StellaPort5555" dir=in action=allow protocol=TCP localport=5555 profile=any >nul 2>&1
 netsh http delete urlacl url=http://+:5555/ >nul 2>&1
-netsh http add urlacl url=http://+:5555/ user="Everyone" >nul 2>&1
+netsh http add urlacl url=http://+:5555/ user=Everyone >nul 2>&1
 
 :: 2. Unduh Script Controller Terbaru
 echo [2/4] Mengunduh script controller terbaru dari GitHub...
@@ -36,7 +36,7 @@ powershell -NoProfile -Command ^
     "Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue;" ^
     "$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File C:\stella-controller.ps1';" ^
     "$trigger = New-ScheduledTaskTrigger -AtStartup;" ^
-    "$principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -LogonType ServiceAccount -RunLevel Highest;" ^
+    "$principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest;" ^
     "$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit 0;" ^
     "Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null;"
 
@@ -50,6 +50,6 @@ echo  BERHASIL! STELLA AGENT KINI RESMI BERJALAN SEBAGAI SERVICE
 echo ========================================================
 echo - Tidak ada lagi jendela hitam CMD/PowerShell yang perlu dibiarkan terbuka.
 echo - Otomatis menyala saat komputer server Hyper-V booting / restart (tanpa perlu login).
-echo - Berjalan di latar belakang dengan akun NT AUTHORITY\SYSTEM.
+echo - Berjalan di latar belakang dengan akun SYSTEM.
 echo.
 pause
