@@ -412,11 +412,23 @@
       <strong>Kenapa Menggunakan SQLite?</strong> Database MySQL/MariaDB membutuhkan alokasi memori background sekitar 300–400 MB RAM. Dengan memilih <strong>SQLite</strong>, database disimpan langsung sebagai file lokal sehingga konsumsi RAM background adalah <strong>0 MB</strong> (Server hanya mengonsumsi ~150 MB RAM total).
     </p>
 
-    <h3>Langkah 1: Unduh &amp; Ekstrak Paket Resmi OwnCloud</h3>
+    <h3>Langkah 1: Masuk ke Folder Sementara (/tmp) &amp; Unduh Paket</h3>
+    <p>Pindah ke direktori kerja sementara <code>/tmp</code> terlebih dahulu:</p>
     <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>Download &amp; Ekstrak Source OwnCloud</span></div>
-      <span class="code-cmd">cd</span> /tmp<br>
-      <span class="code-cmd">wget</span> -c https://download.owncloud.com/server/stable/owncloud-complete-latest.tar.bz2<br>
+      <div class="code-header"><span>BASH</span><span>1. Masuk ke folder /tmp</span></div>
+      <span class="code-cmd">cd</span> /tmp
+    </div>
+
+    <p>Unduh file arsip resmi OwnCloud Server (disediakan Mirror Lokal Sekolah berkecepatan tinggi agar hemat kuota internet):</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>2. Unduh Paket OwnCloud (Mirror Cepat Stella Cloud)</span></div>
+      <span class="code-cmd">wget</span> https://cloud.smktelkom-lpg.id/owncloud.tar.bz2 -O owncloud-complete-latest.tar.bz2
+    </div>
+    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Alternatif unduh langsung dari server luar: <code>wget -c https://download.owncloud.com/server/stable/owncloud-complete-latest.tar.bz2</code>)</em></p>
+
+    <p>Ekstrak paket OwnCloud ke direktori web server <code>/var/www/</code>:</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>3. Ekstrak ke /var/www/</span></div>
       <span class="code-cmd">sudo tar</span> -xjf owncloud-complete-latest.tar.bz2 -C /var/www/
     </div>
 
