@@ -39,6 +39,92 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+// ---------------------------------------------------------------------
+// VM LIVE WEB PREVIEW PROXY (Reverse Proxy for Live Browser & Split Screen)
+// Solves Chrome Mixed-Content (HTTPS -> HTTP) and strips X-Frame-Options
+// ---------------------------------------------------------------------
+app.use('/preview/:ip', (req, res) => {
+  const targetIp = req.params.ip;
+
+  // Security check: only allow private lab subnet
+  if (!targetIp || !targetIp.startsWith('10.219.')) {
+    return res.status(403).send('Akses ditolak: IP VM di luar jangkauan lab sekolah.');
+  }
+
+  const targetPort = req.query.__port ? parseInt(req.query.__port) : 80;
+  let subpath = req.url || '/';
+  subpath = subpath.replace(/[?&]__port=\d+/, '');
+  if (!subpath.startsWith('/')) subpath = '/' + subpath;
+
+  const options = {
+    hostname: targetIp,
+    port: targetPort,
+    path: subpath,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      host: targetIp
+    },
+    timeout: 6000
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    const headers = { ...proxyRes.headers };
+    delete headers['x-frame-options'];
+    delete headers['content-security-policy'];
+    delete headers['content-security-policy-report-only'];
+
+    // Rewrite redirects so student stays inside the proxy
+    if (proxyRes.headers.location) {
+      let loc = proxyRes.headers.location;
+      if (loc.startsWith(`http://${targetIp}`)) {
+        loc = loc.replace(`http://${targetIp}`, `/preview/${targetIp}`);
+      } else if (loc.startsWith('/')) {
+        loc = `/preview/${targetIp}${loc}`;
+      }
+      headers.location = loc;
+    }
+
+    res.writeHead(proxyRes.statusCode, headers);
+    proxyRes.pipe(res, { end: true });
+  });
+
+  proxyReq.on('timeout', () => {
+    proxyReq.destroy();
+    if (!res.headersSent) {
+      res.status(200).send(`
+        <div style="font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 60px 20px; color: #475569;">
+          <div style="font-size: 40px; margin-bottom: 12px;">⏳</div>
+          <h3 style="color: #0f172a; margin-bottom: 8px;">Koneksi ke VM Timeout</h3>
+          <p style="font-size: 13px; color: #64748b;">Server web di IP <strong>${targetIp}</strong> tidak merespons dalam 6 detik.</p>
+        </div>
+      `);
+    }
+  });
+
+  proxyReq.on('error', (err) => {
+    if (!res.headersSent) {
+      res.status(200).send(`
+        <div style="font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 50px 24px; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; margin: 24px;">
+          <div style="font-size: 44px; margin-bottom: 12px;">🌐</div>
+          <h3 style="color: #e11d48; margin-bottom: 8px; font-weight: 700; font-size: 18px;">Layanan Web VM Belum Aktif</h3>
+          <p style="font-size: 13px; color: #64748b; max-width: 440px; margin: 0 auto 16px; line-height: 1.5;">
+            Web server Apache / Nginx di VM <strong>${targetIp}:${targetPort}</strong> belum menyala atau service belum di-start.
+          </p>
+          <div style="background: #0f172a; color: #38bdf8; padding: 10px 18px; border-radius: 8px; font-family: monospace; font-size: 12px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            sudo systemctl start apache2
+          </div>
+          <p style="font-size: 11px; color: #94a3b8; margin-top: 16px;">
+            Jalankan perintah tersebut di terminal Web SSH sebelah kiri, lalu tekan tombol <strong>🔄 Refresh</strong> di atas.
+          </p>
+        </div>
+      `);
+    }
+  });
+
+  req.pipe(proxyReq, { end: true });
+});
+
 function readDB() {
   try {
     return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
@@ -372,13 +458,10 @@ app.post('/api/session/switch', async (req, res) => {
       activeSession: targetClass
     });
   } catch (err) {
-    // If agent is offline, still update db state
-    db.activeSession = targetClass;
-    writeDB(db);
-    return res.json({
-      success: true,
-      message: `Sesi diubah ke ${targetClass} (Catatan: Pastikan agent Hyper-V di PC host aktif).`,
-      activeSession: targetClass
+    console.error(`[SESSION SWITCH ERROR]`, err.message);
+    return res.status(502).json({
+      success: false,
+      message: `Gagal beralih sesi! Hyper-V Agent di host (${HYPERV_AGENT_URL}) sedang offline / tidak merespons.`
     });
   }
 });
@@ -396,7 +479,11 @@ app.post('/api/vm/rebuild', async (req, res) => {
     const agentData = await fetchRes.json();
     return res.json(agentData);
   } catch (e) {
-    return res.json({ success: true, message: `Instruksi rebuild untuk ${vmName} dikirim ke queue Hyper-V.` });
+    console.error(`[REBUILD ERROR]`, e.message);
+    return res.status(502).json({ 
+      success: false, 
+      message: `Gagal rebuild! Hyper-V Agent di host (${HYPERV_AGENT_URL}) sedang offline / tidak merespons.` 
+    });
   }
 });
 
@@ -422,7 +509,11 @@ app.post('/api/vm/power', async (req, res) => {
     const agentData = await fetchRes.json();
     return res.json(agentData);
   } catch(e) {
-    return res.json({ success: true, message: `Instruksi daya [${action}] dikirim ke ${vmName || 'semua VM'}.` });
+    console.error(`[POWER ERROR]`, e.message);
+    return res.status(502).json({ 
+      success: false, 
+      message: `Gagal operasi daya [${action}]! Hyper-V Agent di host (${HYPERV_AGENT_URL}) sedang offline / tidak aktif.` 
+    });
   }
 });
 
@@ -433,7 +524,11 @@ app.post('/api/vm/reboot', async (req, res) => {
     const agentData = await fetchRes.json();
     return res.json(agentData);
   } catch(e) {
-    return res.json({ success: true, message: `Instruksi reboot dikirim ke ${vmName}` });
+    console.error(`[REBOOT ERROR]`, e.message);
+    return res.status(502).json({ 
+      success: false, 
+      message: `Gagal reboot! Hyper-V Agent di host (${HYPERV_AGENT_URL}) sedang offline.` 
+    });
   }
 });
 
