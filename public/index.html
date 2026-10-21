@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stella Cloud - Virtual Lab SMK Telkom Lampung</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- xterm.js CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(14, 165, 233, 0.04) 0px, transparent 50%),
+        radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.04) 0px, transparent 50%),
+        linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cyber-card {
+      background: #ffffff;
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    }
+    .xterm .xterm-viewport {
+      border-radius: 0 0 12px 12px;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-200/80 bg-white/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Minimal Cyber Logo -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-cyan-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-lg text-slate-900 tracking-tight">STELLA CLOUD</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">V-LAB v1.0</span>
+          </div>
+          <p class="text-xs text-slate-500">SMK Telkom Lampung • Cloud Computing XI TKJ</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>15 Nodes Online</span>
+        </div>
+        <div id="userBadge" class="hidden items-center gap-2 pl-3 border-l border-slate-200">
+          <span id="userName" class="text-xs font-semibold text-slate-700 font-mono"></span>
+          <button onclick="logout()" class="text-xs px-2.5 py-1 rounded-md text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition">Keluar</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+
+    <!-- VIEW 1: LOGIN SECTION -->
+    <div id="loginSection" class="max-w-md mx-auto py-10">
+      <div class="cyber-card rounded-2xl p-7 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-100/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+        
+        <div class="mb-6">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-600 mb-2">
+            <svg class="w-3.5 h-3.5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            Single Sign-On Siswa
+          </div>
+          <h2 class="text-xl font-bold text-slate-900 tracking-tight">Masuk ke Virtual Lab</h2>
+          <p class="text-xs text-slate-500 mt-1">Gunakan Nomor Induk Siswa (NIS) untuk mengakses server kelompok Anda.</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Induk Siswa (NIS)</label>
+            <div class="relative">
+              <input type="text" id="nisInput" required placeholder="Contoh: 240101" 
+                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1 font-mono">Tersedia NIS 240101 s/d 240130</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+            <div class="relative">
+              <input type="password" id="passwordInput" required placeholder="••••••••" 
+                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Default password: <code class="font-mono text-cyan-600">smktelkom</code></p>
+          </div>
+
+          <div id="loginError" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600"></div>
+
+          <button type="submit" id="btnLogin" 
+            class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition shadow-sm shadow-slate-900/10 flex items-center justify-center gap-2">
+            <span>Masuk ke Lab</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 2: PAIRING SECTION -->
+    <div id="pairingSection" class="hidden max-w-lg mx-auto py-8">
+      <div class="cyber-card rounded-2xl p-7 relative">
+        <div class="mb-5">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900">Setup Pasangan Kelompok</h2>
+          <p class="text-xs text-slate-500 mt-1">Untuk efisiensi komputasi cloud, 1 Server Ubuntu dikelola oleh 2 siswa (Driver & Navigator). Silakan pilih rekan kelompok Anda.</p>
+        </div>
+
+        <form id="pairingForm" onsubmit="handlePairing(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Akun Anda</label>
+            <input type="text" id="currentUserDisplay" disabled class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm font-mono text-slate-600">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Rekan Kelompok (Belum Berpasangan)</label>
+            <select id="partnerSelect" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition">
+              <option value="">-- Pilih Rekan Kelompok --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Server Kelompok</label>
+            <select id="groupSelect" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition">
+              <option value="">-- Otomatis Pilihkan yang Kosong --</option>
+            </select>
+          </div>
+
+          <div id="pairError" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600"></div>
+
+          <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-sm transition shadow-sm shadow-cyan-600/20 flex items-center justify-center gap-2">
+            <span>Kunci Kelompok & Buka Server</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 3: STUDENT DASHBOARD & TERMINAL -->
+    <div id="dashboardSection" class="hidden space-y-5">
+      
+      <!-- Top Group Info Bar -->
+      <div class="cyber-card rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 id="dashGroupName" class="text-xl font-bold text-slate-900 font-mono">TKJ-Kelompok-XX</h1>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">VM ONLINE</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
+              <span>IP VM: <strong id="dashGroupIp" class="font-mono text-cyan-700">10.219.xx.xx</strong></span>
+              <span>•</span>
+              <span>User: <strong class="font-mono text-slate-800">tkj</strong></span>
+              <span>•</span>
+              <span>Pass: <strong class="font-mono text-slate-800">smktelkom</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VM RESOURCE LIVE TELEMETRY WIDGET -->
+        <div class="flex items-center gap-4 bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 px-4">
+          <!-- VM RAM -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-3 text-[11px] font-mono">
+              <span class="text-slate-500 font-semibold">RAM VM</span>
+              <span id="vmRamVal" class="font-bold text-slate-800">154MB / 384MB</span>
+            </div>
+            <div class="w-28 sm:w-36 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div id="vmRamBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width: 40%"></div>
+            </div>
+          </div>
+
+          <div class="w-px h-8 bg-slate-200"></div>
+
+          <!-- VM CPU -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-3 text-[11px] font-mono">
+              <span class="text-slate-500 font-semibold">CPU VM</span>
+              <span id="vmCpuVal" class="font-bold text-slate-800">0.0%</span>
+            </div>
+            <div class="w-24 sm:w-28 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div id="vmCpuBar" class="bg-cyan-500 h-1.5 rounded-full transition-all duration-500" style="width: 5%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Terminal Window -->
+      <div id="terminalContainer" class="cyber-card rounded-2xl overflow-hidden border border-slate-300 shadow-md">
+        <!-- Terminal Header -->
+        <div class="bg-slate-100 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>
+            <span id="termTitle" class="text-xs font-mono text-slate-600 font-semibold ml-2">ubuntu@vlab-terminal ~ (Web SSH)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="sshStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">Connecting...</span>
+            <button onclick="reconnectSSH()" title="Reconnect SSH" class="p-1 rounded hover:bg-slate-200 text-slate-600 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal Viewport -->
+        <div class="bg-[#0f172a] p-3">
+          <div id="terminal" class="w-full" style="height: 480px;"></div>
+        </div>
+
+        <!-- Terminal Footer Helper -->
+        <div class="bg-slate-50 border-t border-slate-200 px-4 py-2 flex flex-wrap items-center justify-between text-[11px] text-slate-500">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-cyan-600 font-semibold">TIPS:</span>
+            <span>Jalankan <code class="bg-slate-200/80 px-1 py-0.5 rounded font-mono text-slate-700">sudo apt update</code> untuk mulai praktikum.</span>
+          </div>
+          <div class="font-mono text-[10px]">Copy/Paste: Ctrl+Shift+V atau Klik Kanan</div>
+        </div>
+      </div>
+
+      <!-- Quick Reference Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="cyber-card rounded-xl p-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-800 mb-2 font-mono">
+            <span class="w-5 h-5 rounded bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px]">1</span>
+            CEK KONEKSI & IP
+          </div>
+          <pre class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700 overflow-x-auto">ip a
+ping 8.8.8.8</pre>
+        </div>
+
+        <div class="cyber-card rounded-xl p-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-800 mb-2 font-mono">
+            <span class="w-5 h-5 rounded bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px]">2</span>
+            INSTALL WEB SERVER
+          </div>
+          <pre class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700 overflow-x-auto">sudo apt update
+sudo apt install apache2 php libapache2-mod-php -y</pre>
+        </div>
+
+        <div class="cyber-card rounded-xl p-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-800 mb-2 font-mono">
+            <span class="w-5 h-5 rounded bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px]">3</span>
+            TEST AKSES LOCAL
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Buka tab baru dan ketikkan alamat IP server kelompok Anda di browser.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200/80 bg-white/60 py-4 text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>© 2026 Stella Cloud • SMK Telkom Lampung</div>
+      <div>
+        <a href="/admin.html" class="text-slate-500 hover:text-slate-800 font-mono text-[11px] underline">Panel Guru (Teacher Monitor)</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let currentStudent = null;
+    let socket = null;
+    let term = null;
+    let fitAddon = null;
+    let vmMetricsTimer = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('stella_student');
+      if (saved) {
+        currentStudent = JSON.parse(saved);
+        restoreSession();
+      }
+    });
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const nis = document.getElementById('nisInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      const errBox = document.getElementById('loginError');
+      errBox.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nis, password })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          errBox.textContent = data.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        currentStudent = data.student;
+        localStorage.setItem('stella_student', JSON.stringify(currentStudent));
+        restoreSession();
+      } catch (err) {
+        errBox.textContent = 'Gagal menghubungi server. Periksa koneksi jaringan Anda.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function restoreSession() {
+      if (!currentStudent) return;
+
+      document.getElementById('userBadge').classList.remove('hidden');
+      document.getElementById('userBadge').classList.add('flex');
+      document.getElementById('userName').textContent = `${currentStudent.nis} (${currentStudent.name})`;
+
+      if (!currentStudent.isPaired) {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.add('hidden');
+        document.getElementById('pairingSection').classList.remove('hidden');
+        loadPairingOptions();
+      } else {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('pairingSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+
+        document.getElementById('dashGroupName').textContent = currentStudent.group.name;
+        document.getElementById('dashGroupIp').textContent = currentStudent.group.ip;
+        document.getElementById('termTitle').textContent = `tkj@${currentStudent.group.name} (${currentStudent.group.ip}) ~ Web SSH`;
+
+        initTerminal();
+        startVMMonitoring();
+      }
+    }
+
+    async function startVMMonitoring() {
+      if (vmMetricsTimer) clearInterval(vmMetricsTimer);
+      
+      const fetchVMMetrics = async () => {
+        if (!currentStudent || !currentStudent.group) return;
+        try {
+          const res = await fetch(`/api/vm/metrics?ip=${currentStudent.group.ip}`);
+          const data = await res.json();
+          if (data.success && data.metrics) {
+            const m = data.metrics;
+            document.getElementById('vmRamVal').textContent = `${m.usedMB}MB / ${m.totalMB}MB (${m.memPercent}%)`;
+            document.getElementById('vmRamBar').style.width = `${Math.min(100, m.memPercent)}%`;
+
+            document.getElementById('vmCpuVal').textContent = `${m.cpuPercent}%`;
+            document.getElementById('vmCpuBar').style.width = `${Math.min(100, Math.max(5, m.cpuPercent))}%`;
+          }
+        } catch(e) {}
+      };
+
+      fetchVMMetrics();
+      vmMetricsTimer = setInterval(fetchVMMetrics, 3000);
+    }
+
+    async function loadPairingOptions() {
+      document.getElementById('currentUserDisplay').value = `${currentStudent.nis} - ${currentStudent.name}`;
+      
+      const res1 = await fetch(`/api/students/unpaired?currentNis=${currentStudent.nis}`);
+      const data1 = await res1.json();
+      const select = document.getElementById('partnerSelect');
+      select.innerHTML = '<option value="">-- Pilih Rekan Kelompok --</option>';
+      data1.unpaired.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st.nis;
+        opt.textContent = `${st.nis} - ${st.name}`;
+        select.appendChild(opt);
+      });
+
+      const res2 = await fetch('/api/groups/available');
+      const data2 = await res2.json();
+      const grpSelect = document.getElementById('groupSelect');
+      grpSelect.innerHTML = '<option value="">-- Otomatis Pilihkan yang Kosong --</option>';
+      data2.available.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = `${g.name} (IP: ${g.ip})`;
+        grpSelect.appendChild(opt);
+      });
+    }
+
+    async function handlePairing(e) {
+      e.preventDefault();
+      const partnerNis = document.getElementById('partnerSelect').value;
+      const targetGroupId = document.getElementById('groupSelect').value;
+      const errBox = document.getElementById('pairError');
+      errBox.classList.add('hidden');
+
+      if (!partnerNis) {
+        errBox.textContent = 'Harap pilih rekan kelompok Anda terlebih dahulu.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/group/pair', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentNis1: currentStudent.nis,
+            partnerNis,
+            targetGroupId: targetGroupId || null
+          })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          errBox.textContent = data.message;
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        currentStudent.isPaired = true;
+        currentStudent.group = data.group;
+        localStorage.setItem('stella_student', JSON.stringify(currentStudent));
+        restoreSession();
+      } catch (e) {
+        errBox.textContent = 'Gagal menyimpan kelompok.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function initTerminal() {
+      if (term) return;
+
+      const termContainer = document.getElementById('terminal');
+      term = new Terminal({
+        cursorBlink: true,
+        fontSize: 13,
+        fontFamily: 'JetBrains Mono, monospace',
+        theme: {
+          background: '#0f172a',
+          foreground: '#e2e8f0',
+          cursor: '#06b6d4',
+          selectionBackground: 'rgba(6, 182, 212, 0.3)'
+        }
+      });
+
+      fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(termContainer);
+      fitAddon.fit();
+
+      window.addEventListener('resize', () => {
+        if (fitAddon) fitAddon.fit();
+      });
+
+      connectSocket();
+    }
+
+    function connectSocket() {
+      const statusBadge = document.getElementById('sshStatusBadge');
+      statusBadge.textContent = 'Connecting...';
+      statusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium';
+
+      socket = io();
+
+      socket.on('connect', () => {
+        statusBadge.textContent = 'Connected';
+        statusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-medium';
+        socket.emit('start-session', { nis: currentStudent.nis });
+      });
+
+      socket.on('output', (data) => {
+        term.write(data);
+      });
+
+      term.onData((data) => {
+        socket.emit('input', data);
+      });
+
+      term.onResize(({ cols, rows }) => {
+        socket.emit('resize', { cols, rows });
+      });
+
+      socket.on('disconnect', () => {
+        statusBadge.textContent = 'Disconnected';
+        statusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-medium';
+      });
+    }
+
+    function reconnectSSH() {
+      if (term) term.clear();
+      if (socket) {
+        socket.disconnect();
+        connectSocket();
+      }
+    }
+
+    function logout() {
+      if (vmMetricsTimer) clearInterval(vmMetricsTimer);
+      localStorage.removeItem('stella_student');
+      window.location.reload();
+    }
+  </script>
+</body>
+</html>

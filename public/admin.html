@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Monitor - Stella Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(14, 165, 233, 0.03) 0px, transparent 50%),
+        radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+        linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .cyber-card {
+      background: #ffffff;
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-cyan-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring Guru</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">LIVE METRICS</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Monitoring beban Server Portal & Telemetri 15 VM Siswa secara real-time.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-600 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Refresh Otomatis: <strong class="text-slate-800">2s</strong></span>
+        </div>
+        <a href="/" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition shadow-sm">
+          Portal Siswa
+        </a>
+      </div>
+    </div>
+
+    <!-- METRICS CARDS & REAL-TIME CHARTS (HOST SERVER) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <!-- CPU Usage Card & Interactive Chart -->
+      <div class="cyber-card rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host CPU Usage (Portal Server)</h2>
+              <div class="flex items-baseline gap-2">
+                <span id="cpuPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
+                <span id="cpuCoresVal" class="text-xs text-slate-400 font-mono">8 Cores</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="cpuBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Normal</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+          <div style="height: 150px; position: relative;">
+            <canvas id="cpuChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Usage Card & Interactive Chart -->
+      <div class="cyber-card rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7zm0 4h16M8 4v3m8-3v3"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host RAM (Portal Server)</h2>
+              <div class="flex items-baseline gap-2">
+                <span id="memPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
+                <span id="memDetailVal" class="text-xs text-slate-400 font-mono">0 GB / 0 GB</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="memBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Lega</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+          <div style="height: 150px; position: relative;">
+            <canvas id="memChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- QUICK SYSTEM STATS -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="cyber-card rounded-xl p-4">
+        <div class="text-xs font-medium text-slate-500">Total VM Siswa</div>
+        <div class="text-xl font-bold text-slate-900 font-mono mt-1">15 Server</div>
+        <div class="text-[11px] text-emerald-600 font-mono mt-0.5 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 100% Siap
+        </div>
+      </div>
+      <div class="cyber-card rounded-xl p-4">
+        <div class="text-xs font-medium text-slate-500">Kelompok Terisi</div>
+        <div id="statPairedGroups" class="text-xl font-bold text-slate-900 font-mono mt-1">0 / 15</div>
+        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Kelompok Aktif</div>
+      </div>
+      <div class="cyber-card rounded-xl p-4">
+        <div class="text-xs font-medium text-slate-500">Siswa Terpasang</div>
+        <div id="statPairedStudents" class="text-xl font-bold text-slate-900 font-mono mt-1">0 / 30</div>
+        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Siswa XI TKJ</div>
+      </div>
+      <div class="cyber-card rounded-xl p-4">
+        <div class="text-xs font-medium text-slate-500">Server Uptime</div>
+        <div id="statUptime" class="text-xl font-bold text-slate-900 font-mono mt-1">0 Jam</div>
+        <div class="text-[11px] text-slate-400 font-mono mt-0.5">Stella Local Host</div>
+      </div>
+    </div>
+
+    <!-- 15 VM GROUPS TABLE WITH LIVE VM RAM & CPU -->
+    <div class="cyber-card rounded-2xl overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+        <div>
+          <h2 class="font-bold text-sm text-slate-800">Status & Telemetri 15 Server VM Kelompok Siswa</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Monitoring beban CPU & RAM masing-masing VM Ubuntu siswa.</p>
+        </div>
+        <button onclick="loadGroups()" class="text-xs px-3.5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Refresh Tabel</span>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-500 font-mono uppercase text-[11px] border-b border-slate-200">
+            <tr>
+              <th class="p-3.5">Kelompok</th>
+              <th class="p-3.5">IP Server (VM)</th>
+              <th class="p-3.5">Status</th>
+              <th class="p-3.5">RAM VM Siswa</th>
+              <th class="p-3.5">CPU VM Siswa</th>
+              <th class="p-3.5">Anggota Siswa</th>
+              <th class="p-3.5 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="groupTableBody" class="divide-y divide-slate-100 font-mono">
+            <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat status server...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const MAX_POINTS = 20;
+    const timeLabels = Array(MAX_POINTS).fill('');
+    const cpuData = Array(MAX_POINTS).fill(0);
+    const memData = Array(MAX_POINTS).fill(0);
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          ticks: {
+            callback: value => value + '%',
+            font: { family: 'JetBrains Mono', size: 10 },
+            color: '#94a3b8'
+          },
+          grid: { color: 'rgba(226, 232, 240, 0.6)' }
+        },
+        x: { display: false, grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: { label: context => ` ${context.parsed.y}%` }
+        }
+      }
+    };
+
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const cpuChart = new Chart(cpuCtx, {
+      type: 'line',
+      data: {
+        labels: timeLabels,
+        datasets: [{
+          data: cpuData,
+          borderColor: '#0284c7',
+          backgroundColor: 'rgba(14, 165, 233, 0.12)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 1
+        }]
+      },
+      options: chartOptions
+    });
+
+    const memCtx = document.getElementById('memChart').getContext('2d');
+    const memChart = new Chart(memCtx, {
+      type: 'line',
+      data: {
+        labels: timeLabels,
+        datasets: [{
+          data: memData,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.12)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 1
+        }]
+      },
+      options: chartOptions
+    });
+
+    async function updateMetrics() {
+      try {
+        const res = await fetch('/api/system/metrics');
+        const data = await res.json();
+        if (!data.success) return;
+
+        document.getElementById('cpuPercentVal').textContent = `${data.cpu.usagePercent}%`;
+        document.getElementById('cpuCoresVal').textContent = `${data.cpu.cores} Cores`;
+        
+        document.getElementById('memPercentVal').textContent = `${data.memory.usagePercent}%`;
+        document.getElementById('memDetailVal').textContent = `${data.memory.usedGB} GB / ${data.memory.totalGB} GB`;
+        document.getElementById('statUptime').textContent = `${data.uptimeHours} Jam`;
+
+        cpuData.shift();
+        cpuData.push(data.cpu.usagePercent);
+        cpuChart.update();
+
+        memData.shift();
+        memData.push(data.memory.usagePercent);
+        memChart.update();
+      } catch (e) {}
+    }
+
+    async function loadGroups() {
+      const tbody = document.getElementById('groupTableBody');
+      try {
+        const res = await fetch('/api/groups/status');
+        const data = await res.json();
+        
+        tbody.innerHTML = '';
+        let pairedCount = 0;
+        let studentCount = 0;
+
+        data.groups.forEach(g => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50/80 transition';
+          
+          if (g.members.length > 0) {
+            pairedCount++;
+            studentCount += g.members.length;
+          }
+
+          const statusBadge = g.isOnline 
+            ? '<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">ONLINE</span>'
+            : '<span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px]">OFFLINE</span>';
+
+          const membersList = g.members.length > 0 
+            ? g.members.join(', ')
+            : '<span class="text-slate-400 italic">Belum ada siswa</span>';
+
+          const m = g.metrics || { usedMB: 154, totalMB: 384, memPercent: 40, cpuPercent: 0 };
+          const ramBarWidth = Math.min(100, Math.max(8, m.memPercent));
+
+          tr.innerHTML = `
+            <td class="p-3.5 font-bold text-slate-900">${g.name}</td>
+            <td class="p-3.5 text-cyan-600 font-semibold">${g.ip}</td>
+            <td class="p-3.5">${statusBadge}</td>
+            <td class="p-3.5">
+              <div class="space-y-1">
+                <div class="text-[11px] text-slate-700">${m.usedMB} MB <span class="text-slate-400">/ ${m.totalMB} MB</span></div>
+                <div class="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-indigo-500 h-1.5 rounded-full" style="width: ${ramBarWidth}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="p-3.5">
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px]">${m.cpuPercent}%</span>
+            </td>
+            <td class="p-3.5 text-slate-700 font-sans">${membersList}</td>
+            <td class="p-3.5 text-right font-sans">
+              <button onclick="resetGroup(${g.id})" class="text-xs px-2.5 py-1 text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-lg transition">Reset</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('statPairedGroups').textContent = `${pairedCount} / 15`;
+        document.getElementById('statPairedStudents').textContent = `${studentCount} / 30`;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-red-500">Gagal mengambil data server.</td></tr>';
+      }
+    }
+
+    async function resetGroup(groupId) {
+      const pin = prompt('Masukkan PIN Admin Guru (Default: admin123):');
+      if (!pin) return;
+
+      const res = await fetch('/api/admin/reset-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, groupId })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadGroups();
+    }
+
+    updateMetrics();
+    setInterval(updateMetrics, 2000);
+    loadGroups();
+    setInterval(loadGroups, 8000); // Poll VM table every 8s
+  </script>
+</body>
+</html>
