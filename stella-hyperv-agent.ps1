@@ -39,7 +39,7 @@ function Switch-ClassSession($targetClass) {
             Stop-VM -Name $vmName -TurnOff -ErrorAction SilentlyContinue
             $drive = Get-VMHardDiskDrive -VMName $vmName
             Set-VMHardDiskDrive -VMHardDiskDrive $drive -Path $newVhd
-            Start-VM -Name $vmName
+            Start-VM -Name $vmName -AsJob | Out-Null
             Write-Host "  -> $vmName dialihkan ke $targetClass" -ForegroundColor Green
         } catch {
             Write-Host "  -> Gagal pada $($vmName)" -ForegroundColor Red
@@ -63,7 +63,7 @@ function Rebuild-VMInstance($vmName, $targetClass) {
     New-VHD -ParentPath $masterVHD -Path $vhdPath -Differencing | Out-Null
     $drive = Get-VMHardDiskDrive -VMName $vmName
     Set-VMHardDiskDrive -VMHardDiskDrive $drive -Path $vhdPath
-    Start-VM -Name $vmName
+    Start-VM -Name $vmName -AsJob | Out-Null
     Write-Host "[OK] $vmName berhasil di-rebuild ke kondisi pabrik!" -ForegroundColor Green
     return "$vmName berhasil di-rebuild bersih!"
 }
@@ -124,9 +124,9 @@ while ($listener.IsListening) {
         
         if ($vmName) {
             if ($action -eq "start") {
-                Start-VM -Name $vmName -ErrorAction SilentlyContinue
-                $resObj = @{ success = $true; message = "$vmName berhasil dinyalakan" }
-                Write-Host "[POWER] Menyalakan $vmName" -ForegroundColor Green
+                Start-VM -Name $vmName -AsJob -ErrorAction SilentlyContinue | Out-Null
+                $resObj = @{ success = $true; message = "$vmName sedang dinyalakan" }
+                Write-Host "[POWER] Menyalakan $vmName (Background Job)" -ForegroundColor Green
             } elseif ($action -eq "stop") {
                 Stop-VM -Name $vmName -TurnOff -ErrorAction SilentlyContinue
                 $resObj = @{ success = $true; message = "$vmName berhasil dimatikan" }
@@ -137,12 +137,12 @@ while ($listener.IsListening) {
     elseif ($url -match "/api/power-all") {
         $action = $request.QueryString["action"]
         if ($action -eq "start-all") {
-            Write-Host "[POWER] Menyalakan seluruh 15 VM..." -ForegroundColor Green
+            Write-Host "[POWER] Menyalakan seluruh 15 VM secara PARALEL..." -ForegroundColor Green
             1..15 | ForEach-Object {
                 $num = "{0:D2}" -f $_
-                Start-VM -Name "TKJ-Kelompok-$num" -ErrorAction SilentlyContinue
+                Start-VM -Name "TKJ-Kelompok-$num" -AsJob -ErrorAction SilentlyContinue | Out-Null
             }
-            $resObj = @{ success = $true; message = "Semua 15 VM berhasil dinyalakan" }
+            $resObj = @{ success = $true; message = "Semua 15 VM sedang dinyalakan secara paralel" }
         } elseif ($action -eq "stop-all") {
             Write-Host "[POWER] Mematikan seluruh 15 VM..." -ForegroundColor Yellow
             1..15 | ForEach-Object {
@@ -150,6 +150,13 @@ while ($listener.IsListening) {
                 Stop-VM -Name "TKJ-Kelompok-$num" -TurnOff -ErrorAction SilentlyContinue
             }
             $resObj = @{ success = $true; message = "Semua 15 VM berhasil dimatikan" }
+        }
+    }
+    elseif ($url -match "/api/reboot-vm") {
+        $vmName = $request.QueryString["vm"]
+        if ($vmName) {
+            Restart-VM -Name $vmName -Force -ErrorAction SilentlyContinue
+            $resObj = @{ success = $true; message = "$vmName berhasil direstart" }
         }
     }
 
