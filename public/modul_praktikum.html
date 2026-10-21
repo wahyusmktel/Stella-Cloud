@@ -489,15 +489,20 @@
       <span class="code-cmd">sudo systemctl</span> restart apache2
     </div>
 
-    <h3>Langkah 3: Inisialisasi Database SQLite &amp; Akun Admin</h3>
-    <p>Inisialisasi dapat dijalankan sangat cepat via CLI terminal menggunakan utilitas <code class="badge badge-cyan">occ</code>:</p>
+    <h3>Langkah 3: Inisialisasi Database SQLite &amp; Trusted Domains</h3>
+    <p>Inisialisasi basis data SQLite dan akun admin langsung via utilitas terminal <code>occ</code>:</p>
     <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>Inisialisasi Instan via OCC</span></div>
+      <div class="code-header"><span>BASH</span><span>1. Inisialisasi Database &amp; Admin</span></div>
       <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ maintenance:install \<br>
-      &nbsp;&nbsp;--database "sqlite" --admin-user "admin" --admin-pass "smktelkom"<br>
-      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 1 --value="*"
+      &nbsp;&nbsp;--database "sqlite" --admin-user "admin" --admin-pass "smktelkom"
     </div>
-    <p><em>(Atau buka browser ke <code>http://10.219.30.xx/</code> untuk menyelesaikan via antarmuka grafis Web Wizard).</em></p>
+
+    <p>Daftarkan IP server kelompok Anda agar diizinkan oleh sistem keamanan OwnCloud:</p>
+    <div class="code-block">
+      <div class="code-header"><span>BASH</span><span>2. Izinkan Akses IP VM (Otomatis)</span></div>
+      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 1 --value="$(hostname -I | awk '{print $1}')"
+    </div>
+    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Atau ketik manual IP VM Anda: <code>sudo -u www-data php7.4 /var/www/owncloud/occ config:system:set trusted_domains 1 --value="10.219.30.xx"</code>)</em></p>
 
     <!-- UI Mockup OwnCloud Setup Wizard -->
     <div class="ui-mockup">
@@ -567,15 +572,16 @@
       </div>
     </div>
 
-    <h3>Langkah 3: Konfigurasi Trusted Domains pada OwnCloud</h3>
+    <h3>Langkah 3: Daftarkan Domain Tunnel ke Trusted Domains</h3>
     <p>
-      Secara default, OwnCloud akan memblokir akses jika dibuka melalui domain baru demi keamanan. Agar URL Cloudflare Tunnel diizinkan, jalankan perintah instan berikut via CLI:
+      Secara default, OwnCloud akan memblokir akses jika dibuka melalui domain publik baru demi keamanan. Masukkan URL subdomain tunnel Anda ke dalam daftar trusted domains nomor 2:
     </p>
     <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>Izinkan Semua Domain Tunnel (Instan)</span></div>
-      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 2 --value="*"
+      <div class="code-header"><span>BASH</span><span>Daftarkan Subdomain Cloudflare Tunnel</span></div>
+      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 2 \<br>
+      &nbsp;&nbsp;--value="nama-subdomain-anda.trycloudflare.com"
     </div>
-    <p><em>(Atau jika ingin manual via editor: <code>sudo nano /var/www/owncloud/config/config.php</code> lalu tambahkan domain tunnel pada bagian <code>'trusted_domains'</code>).</em></p>
+    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Ganti <code>nama-subdomain-anda.trycloudflare.com</code> dengan domain unik yang muncul di terminal langkah 2 di atas).</em></p>
 
     <h3>Langkah 4: Pengujian Akses Internet dari Smartphone</h3>
     <ol>
