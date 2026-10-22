@@ -194,9 +194,14 @@
             </svg>
           </div>
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <h1 id="dashGroupName" class="text-xl font-bold text-slate-900 font-mono">TKJ-Kelompok-XX</h1>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">VM ONLINE</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold inline-flex items-center gap-1.5 shadow-sm" title="Semua instalasi, file, dan konfigurasi Linux otomatis tersimpan ke harddisk virtual sesi kelas Anda">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+                <span>Auto-Saved Sesi:</span>
+                <strong id="dashClassBadge" class="text-cyan-800">XI-TKJ-1</strong>
+              </span>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
               <span>IP VM: <strong id="dashGroupIp" class="font-mono text-cyan-700">10.219.xx.xx</strong></span>
@@ -441,7 +446,9 @@ sudo apt install apache2 php libapache2-mod-php -y</pre>
 
       document.getElementById('userBadge').classList.remove('hidden');
       document.getElementById('userBadge').classList.add('flex');
-      document.getElementById('userName').textContent = `${currentStudent.nis} (${currentStudent.name})`;
+      const userClass = currentStudent.class ? ` [${currentStudent.class}]` : '';
+      document.getElementById('userName').textContent = `${currentStudent.nis} (${currentStudent.name})${userClass}`;
+      if (document.getElementById('dashClassBadge')) document.getElementById('dashClassBadge').textContent = currentStudent.class || 'XI-TKJ-1';
 
       if (!currentStudent.isPaired) {
         document.getElementById('loginSection').classList.add('hidden');

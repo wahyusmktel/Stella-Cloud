@@ -175,21 +175,18 @@
       <!-- MASTER POWER CONTROL & CLASS SWITCHER BAR -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Box 1: Sesi Kelas -->
-        <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-cyan-600">
+        <div class="cyber-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-cyan-600">
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Sesi Kelas Aktif</h2>
-              <span id="activeSessionBadge" class="px-2 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
+              <span id="activeSessionBadge" class="px-2.5 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white shadow-sm">XI-TKJ-1</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-1">Tugas & harddisk tersimpan terpisah per kelas.</p>
+            <p class="text-[11px] text-slate-400 mt-1">Harddisk &amp; kelompok terisolasi penuh antar kelas.</p>
           </div>
-          <div class="flex items-center gap-1.5">
-            <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm">
-              XI TKJ 1
-            </button>
-            <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
-              XI TKJ 2
-            </button>
+          <div class="flex items-center gap-1.5 flex-wrap" id="sessionButtonsContainer">
+            <button onclick="switchSession('XI-TKJ-1')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm">XI TKJ 1</button>
+            <button onclick="switchSession('XI-TKJ-2')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">XI TKJ 2</button>
+            <button onclick="promptAddNewClass()" class="px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200">➕ Tambah Kelas</button>
           </div>
         </div>
 
@@ -569,6 +566,7 @@
   <!-- SCRIPT LOGIC -->
   <script>
     let currentSession = 'XI-TKJ-1';
+    let availableClasses = ['XI-TKJ-1', 'XI-TKJ-2'];
     let currentView = 'monitoring';
     let allStudentsData = [];
     let pendingTransitions = {}; // vmName -> 'starting' | 'stopping' | 'rebuilding'
@@ -1077,8 +1075,11 @@
       try {
         const res = await fetch('/api/session/current');
         const data = await res.json();
-        if (data.success && data.activeSession) {
-          currentSession = data.activeSession;
+        if (data.success) {
+          if (data.activeSession) currentSession = data.activeSession;
+          if (data.availableClasses && Array.isArray(data.availableClasses)) {
+            availableClasses = Array.from(new Set([...availableClasses, ...data.availableClasses]));
+          }
           updateSessionUI();
         }
       } catch (e) {}
@@ -1086,16 +1087,41 @@
 
     function updateSessionUI() {
       document.getElementById('activeSessionBadge').textContent = currentSession;
-      const btn1 = document.getElementById('btnSessionTKJ1');
-      const btn2 = document.getElementById('btnSessionTKJ2');
+      const container = document.getElementById('sessionButtonsContainer');
+      if (!container) return;
 
-      if (currentSession === 'XI-TKJ-1') {
-        btn1.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm';
-        btn2.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
-      } else {
-        btn2.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm';
-        btn1.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+      container.innerHTML = '';
+      availableClasses.forEach(cls => {
+        const btn = document.createElement('button');
+        const isActive = cls === currentSession;
+        btn.onclick = () => switchSession(cls);
+        btn.textContent = cls.replace(/-/g, ' ');
+        if (isActive) {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200';
+        }
+        container.appendChild(btn);
+      });
+
+      const addBtn = document.createElement('button');
+      addBtn.onclick = promptAddNewClass;
+      addBtn.className = 'px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 flex items-center gap-1';
+      addBtn.innerHTML = '<span>➕</span><span>Tambah Kelas</span>';
+      addBtn.title = 'Tambah Sesi Kelas Baru (misal: XI-TKJ-3, XII-TKJ-1)';
+      container.appendChild(addBtn);
+    }
+
+    function promptAddNewClass() {
+      const newClass = prompt('Masukkan Nama Sesi Kelas Baru:\n(Contoh: XI-TKJ-3 atau XII-TKJ-1)', 'XI-TKJ-3');
+      if (!newClass) return;
+      const cleaned = newClass.trim().replace(/\s+/g, '-').toUpperCase();
+      if (!cleaned) return;
+
+      if (!availableClasses.includes(cleaned)) {
+        availableClasses.push(cleaned);
       }
+      switchSession(cleaned);
     }
 
     async function switchSession(targetClass) {

@@ -1006,11 +1006,40 @@ const HYPERV_AGENT_URL = 'http://10.219.30.102:5555';
 // ---------------------------------------------------------------------
 // 4. MULTI-CLASS SESSION & REBUILD CONTROLLER
 // ---------------------------------------------------------------------
+const DEFAULT_VM_GROUPS = [
+  { id: 1, name: "TKJ-Kelompok-01", ip: "10.219.30.84", status: "active", members: [] },
+  { id: 2, name: "TKJ-Kelompok-02", ip: "10.219.30.86", status: "active", members: [] },
+  { id: 3, name: "TKJ-Kelompok-03", ip: "10.219.30.92", status: "active", members: [] },
+  { id: 4, name: "TKJ-Kelompok-04", ip: "10.219.30.93", status: "active", members: [] },
+  { id: 5, name: "TKJ-Kelompok-05", ip: "10.219.30.94", status: "active", members: [] },
+  { id: 6, name: "TKJ-Kelompok-06", ip: "10.219.30.96", status: "active", members: [] },
+  { id: 7, name: "TKJ-Kelompok-07", ip: "10.219.30.100", status: "active", members: [] },
+  { id: 8, name: "TKJ-Kelompok-08", ip: "10.219.30.101", status: "active", members: [] },
+  { id: 9, name: "TKJ-Kelompok-09", ip: "10.219.30.103", status: "active", members: [] },
+  { id: 10, name: "TKJ-Kelompok-10", ip: "10.219.30.104", status: "active", members: [] },
+  { id: 11, name: "TKJ-Kelompok-11", ip: "10.219.30.105", status: "active", members: [] },
+  { id: 12, name: "TKJ-Kelompok-12", ip: "10.219.30.106", status: "active", members: [] },
+  { id: 13, name: "TKJ-Kelompok-13", ip: "10.219.30.107", status: "active", members: [] },
+  { id: 14, name: "TKJ-Kelompok-14", ip: "10.219.30.108", status: "active", members: [] },
+  { id: 15, name: "TKJ-Kelompok-15", ip: "10.219.30.109", status: "active", members: [] }
+];
+
+function createFreshGroups() {
+  return JSON.parse(JSON.stringify(DEFAULT_VM_GROUPS));
+}
+
 app.get('/api/session/current', (req, res) => {
   const db = readDB();
+  const current = db.activeSession || 'XI-TKJ-1';
+  const availableClasses = Object.keys(db.classGroups || { 'XI-TKJ-1': true, 'XI-TKJ-2': true });
+  if (!availableClasses.includes('XI-TKJ-1')) availableClasses.unshift('XI-TKJ-1');
+  if (!availableClasses.includes('XI-TKJ-2')) availableClasses.push('XI-TKJ-2');
+  if (!availableClasses.includes(current)) availableClasses.push(current);
+
   res.json({
     success: true,
-    activeSession: db.activeSession || 'XI-TKJ-1'
+    activeSession: current,
+    availableClasses
   });
 });
 
@@ -1024,23 +1053,42 @@ app.post('/api/session/switch', requireAdminAuth, async (req, res) => {
     return res.status(403).json({ success: false, message: 'Autentikasi admin diperlukan!' });
   }
 
+  const cleanTarget = String(targetClass || '').trim().replace(/\s+/g, '-').toUpperCase();
+  if (!cleanTarget) {
+    return res.status(400).json({ success: false, message: 'Nama sesi kelas target tidak valid!' });
+  }
+
+  // Backup kelompok kelas aktif saat ini
+  if (!db.classGroups) db.classGroups = {};
+  const prevClass = db.activeSession || 'XI-TKJ-1';
+  db.classGroups[prevClass] = JSON.parse(JSON.stringify(db.groups || []));
+
+  // Muat kelompok target (atau buat baru jika belum pernah ada)
+  if (!db.classGroups[cleanTarget] || !Array.isArray(db.classGroups[cleanTarget]) || db.classGroups[cleanTarget].length === 0) {
+    db.classGroups[cleanTarget] = createFreshGroups();
+  }
+  db.groups = JSON.parse(JSON.stringify(db.classGroups[cleanTarget]));
+  db.activeSession = cleanTarget;
+  writeDB(db);
+
   try {
-    const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/switch-session?class=${targetClass}`);
+    const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/switch-session?class=${cleanTarget}`);
     const agentData = await fetchRes.json();
     
-    db.activeSession = targetClass;
-    writeDB(db);
-
     return res.json({
       success: true,
-      message: `Berhasil beralih ke sesi ${targetClass}!`,
-      activeSession: targetClass
+      message: `Berhasil beralih ke sesi kelas ${cleanTarget}! Harddisk & kelompok VM terisolasi.`,
+      activeSession: cleanTarget,
+      availableClasses: Object.keys(db.classGroups)
     });
   } catch (err) {
     console.error(`[SESSION SWITCH ERROR]`, err.message);
-    return res.status(502).json({
-      success: false,
-      message: `Gagal beralih sesi! Hyper-V Agent di host (${HYPERV_AGENT_URL}) sedang offline / tidak merespons.`
+    return res.json({
+      success: true,
+      warning: true,
+      message: `Sesi portal beralih ke ${cleanTarget}. (Catatan: Hyper-V Agent offline)`,
+      activeSession: cleanTarget,
+      availableClasses: Object.keys(db.classGroups)
     });
   }
 });

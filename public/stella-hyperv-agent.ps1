@@ -37,7 +37,10 @@ function Wait-VMState($vmName, $targetState, $timeoutSec = 20) {
 }
 
 function Switch-ClassSession($targetClass) {
-    $targetDir = if ($targetClass -eq "XI-TKJ-2") { $dirTKJ2 } else { $dirTKJ1 }
+    $targetDir = "$baseDir\$targetClass"
+    if (-not (Test-Path $targetDir)) {
+        New-Item -ItemType Directory -Force -Path $targetDir -ErrorAction SilentlyContinue | Out-Null
+    }
     Write-Host "[SWITCH] Menukar disk 15 VM ke sesi: $targetClass..." -ForegroundColor Yellow
 
     1..15 | ForEach-Object {
@@ -76,7 +79,10 @@ function Switch-ClassSession($targetClass) {
 }
 
 function Rebuild-VMInstance($vmName, $targetClass) {
-    $targetDir = if ($targetClass -eq "XI-TKJ-2") { $dirTKJ2 } else { $dirTKJ1 }
+    $targetDir = "$baseDir\$targetClass"
+    if (-not (Test-Path $targetDir)) {
+        New-Item -ItemType Directory -Force -Path $targetDir -ErrorAction SilentlyContinue | Out-Null
+    }
     $vhdPath = "$targetDir\$vmName.vhdx"
 
     Write-Host "[REBUILD] Mereset VM $vmName ($targetClass) ke master bersih..." -ForegroundColor Magenta
@@ -176,7 +182,7 @@ while ($listener.IsListening) {
         }
         elseif ($url -match "/api/switch-session") {
             $targetClass = $request.QueryString["class"]
-            if ($targetClass -in @("XI-TKJ-1", "XI-TKJ-2")) {
+            if ($targetClass) {
                 $msg = Switch-ClassSession $targetClass
                 $currentSession = $targetClass
                 $resObj = @{ success = $true; message = $msg; currentSession = $currentSession }
