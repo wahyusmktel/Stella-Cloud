@@ -957,6 +957,128 @@ app.get('/api/admin/groups', requireAdminAuth, (req, res) => {
   res.json({ success: true, groups });
 });
 
+// ---------------------------------------------------------------------
+// 3.2. PDF GUIDES & MODULES MANAGEMENT
+// ---------------------------------------------------------------------
+const DEFAULT_GUIDES = [
+  {
+    id: "panduan-1",
+    title: "Panduan Praktikum Cloud Computing XI TKJ",
+    description: "Buku modul resmi: Instalasi Apache, PHP 7.4, SQLite, OwnCloud, & Cloudflare Tunnel.",
+    filename: "Panduan-Praktikum-Cloud-Computing-XI-TKJ.pdf",
+    url: "/Panduan-Praktikum-Cloud-Computing-XI-TKJ.pdf",
+    size: "840 KB",
+    uploadedAt: "2026-10-22"
+  },
+  {
+    id: "panduan-2",
+    title: "Modul Praktikum Cloud Computing (Ringkas)",
+    description: "Lembar praktikum langkah demi langkah konfigurasi web server dan cloud drive.",
+    filename: "Modul-Praktikum-Cloud-Computing-XI-TKJ.pdf",
+    url: "/Modul-Praktikum-Cloud-Computing-XI-TKJ.pdf",
+    size: "840 KB",
+    uploadedAt: "2026-10-22"
+  }
+];
+
+function getGuidesFromDB(db) {
+  if (!db.guides || !Array.isArray(db.guides) || db.guides.length === 0) {
+    db.guides = JSON.parse(JSON.stringify(DEFAULT_GUIDES));
+  }
+  return db.guides;
+}
+
+app.get('/api/guides', (req, res) => {
+  const db = readDB();
+  const guides = getGuidesFromDB(db);
+  res.json({ success: true, guides });
+});
+
+app.post('/api/admin/guides', requireAdminAuth, (req, res) => {
+  const { title, description, filename, fileBase64 } = req.body;
+  if (!title || !filename || !fileBase64) {
+    return res.status(400).json({ success: false, message: 'Judul, nama file, dan konten file PDF wajib diisi!' });
+  }
+
+  const cleanFilename = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+  if (!cleanFilename.toLowerCase().endsWith('.pdf')) {
+    return res.status(400).json({ success: false, message: 'Hanya file berformat .pdf yang diperbolehkan!' });
+  }
+
+  const db = readDB();
+  if (!db.guides) db.guides = getGuidesFromDB(db);
+
+  try {
+    const fileBuf = Buffer.from(fileBase64, 'base64');
+    const sizeKB = (fileBuf.length / 1024).toFixed(0);
+    const sizeStr = fileBuf.length > 1024 * 1024 
+      ? (fileBuf.length / (1024 * 1024)).toFixed(1) + ' MB' 
+      : `${sizeKB} KB`;
+
+    // Simpan ke direktori public dan fallback
+    const targetPath = path.join(__dirname, 'public', cleanFilename);
+    try { fs.writeFileSync(targetPath, fileBuf); } catch(e) {}
+    try { 
+      const shmDir = '/dev/shm/guides';
+      if (!fs.existsSync(shmDir)) fs.mkdirSync(shmDir, { recursive: true });
+      fs.writeFileSync(path.join(shmDir, cleanFilename), fileBuf);
+    } catch(e) {}
+
+    const newGuide = {
+      id: 'guide-' + Date.now(),
+      title: String(title).trim(),
+      description: String(description || '').trim(),
+      filename: cleanFilename,
+      url: `/${cleanFilename}`,
+      size: sizeStr,
+      uploadedAt: new Date().toISOString().split('T')[0]
+    };
+
+    db.guides.unshift(newGuide);
+    writeDB(db);
+
+    res.json({ success: true, message: `Panduan "${newGuide.title}" berhasil diupload!`, guide: newGuide });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menyimpan file PDF: ' + err.message });
+  }
+});
+
+app.delete('/api/admin/guides/:id', requireAdminAuth, (req, res) => {
+  const targetId = req.params.id;
+  const db = readDB();
+  if (!db.guides) db.guides = getGuidesFromDB(db);
+
+  const idx = db.guides.findIndex(g => g.id === targetId);
+  if (idx === -1) {
+    return res.status(404).json({ success: false, message: 'Panduan tidak ditemukan!' });
+  }
+
+  const removed = db.guides.splice(idx, 1)[0];
+  writeDB(db);
+
+  try { fs.unlinkSync(path.join(__dirname, 'public', removed.filename)); } catch(e) {}
+  try { fs.unlinkSync(path.join('/dev/shm/guides', removed.filename)); } catch(e) {}
+
+  res.json({ success: true, message: `Panduan "${removed.title}" berhasil dihapus.` });
+});
+
+app.get('/guides/:filename', (req, res) => {
+  const cleanFilename = path.basename(req.params.filename);
+  let filePath = path.join(__dirname, 'public', cleanFilename);
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join('/dev/shm/guides', cleanFilename);
+  }
+
+  if (fs.existsSync(filePath)) {
+    const isDownload = req.query.download === '1';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', isDownload ? `attachment; filename="${cleanFilename}"` : `inline; filename="${cleanFilename}"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return fs.createReadStream(filePath).pipe(res);
+  }
+  res.status(404).send('File panduan tidak ditemukan.');
+});
+
 app.get('/api/groups/status', async (req, res) => {
   const db = readDB();
   

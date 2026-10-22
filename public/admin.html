@@ -105,6 +105,14 @@
           <span>Status 15 Kelompok</span>
         </button>
 
+        <button onclick="switchView('guides')" id="nav-guides" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left hover:bg-slate-800/60 hover:text-white">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span>Daftar Panduan PDF</span>
+        </button>
+
+
         <div class="pt-4 px-3 py-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Akses Cepat</div>
 
         <a href="/" target="_blank" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition hover:bg-slate-800/60 hover:text-white">
@@ -429,6 +437,60 @@
 
     </div>
 
+      <!-- =================================================================== -->
+    <!-- VIEW 4: PANDUAN & MODUL PRAKTIKUM (PDF) -->
+    <!-- =================================================================== -->
+    <div id="view-guides-container" class="hidden space-y-6">
+      
+      <!-- Action Banner -->
+      <div class="cyber-card rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <span>📚</span>
+            <span>Koleksi Modul &amp; Panduan Praktikum (PDF)</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            File PDF yang diunggah di sini akan otomatis tampil di Portal Siswa dan dapat langsung dibaca, dibuka di split-screen saat praktikum, atau diunduh.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button onclick="loadAdminGuides()" class="text-xs px-3.5 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
+            <span>🔄</span>
+            <span>Refresh</span>
+          </button>
+          <button onclick="openUploadGuideModal()" class="text-xs px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl transition flex items-center gap-2 font-semibold shadow-md shadow-amber-500/20 active:scale-95">
+            <span>📤</span>
+            <span>Upload PDF Baru</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="cyber-card rounded-2xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900 text-slate-300 uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-3 px-4">No</th>
+                <th class="py-3 px-4">Judul &amp; Keterangan Modul</th>
+                <th class="py-3 px-4">Nama File PDF</th>
+                <th class="py-3 px-4">Ukuran</th>
+                <th class="py-3 px-4">Tanggal Upload</th>
+                <th class="py-3 px-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="guidesTableBody" class="divide-y divide-slate-100 bg-white">
+              <!-- Rendered via JS -->
+              <tr>
+                <td colspan="6" class="py-8 text-center text-slate-400 font-mono">Memuat daftar panduan...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 
   <!-- =================================================================== -->
@@ -563,6 +625,52 @@
     </div>
   </div>
 
+    <!-- =================================================================== -->
+  <!-- MODAL 4: UPLOAD PANDUAN PDF -->
+  <!-- =================================================================== -->
+  <div id="modalUploadGuide" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>📤</span> Upload Modul Panduan Praktikum (PDF)
+        </h3>
+        <button onclick="closeModal('modalUploadGuide')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <form onsubmit="handleUploadGuide(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Judul Panduan / Modul <span class="text-rose-500">*</span></label>
+          <input type="text" id="guideTitle" required placeholder="Contoh: Modul 02 - Instalasi Web Server &amp; Cloud Storage" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Deskripsi Singkat</label>
+          <textarea id="guideDescription" rows="2" placeholder="Keterangan materi praktikum atau panduan langkah pengerjaan..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-xs"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Pilih File Dokumen (.PDF) <span class="text-rose-500">*</span></label>
+          <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 bg-slate-50 hover:bg-slate-100 transition text-center cursor-pointer relative" onclick="document.getElementById('guideFileInput').click()">
+            <input type="file" id="guideFileInput" accept=".pdf,application/pdf" class="hidden" onchange="onGuideFileSelected(this)">
+            <div class="flex flex-col items-center gap-1.5">
+              <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              <span id="guideFileNameLabel" class="font-mono text-slate-700 font-semibold text-xs">Klik untuk memilih file PDF</span>
+              <span id="guideFileSizeLabel" class="text-[11px] text-slate-400">Maksimal ukuran disarankan 20 MB (.pdf)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalUploadGuide')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+          <button type="submit" id="btnSubmitUploadGuide" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition shadow-sm shadow-amber-500/20 flex items-center gap-2">
+            <span>Upload &amp; Publikasikan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <!-- SCRIPT LOGIC -->
   <script>
     let currentSession = 'XI-TKJ-1';
@@ -577,7 +685,7 @@
       currentView = viewName;
 
       // Update sidebar active classes
-      const views = ['monitoring', 'students', 'groups'];
+      const views = ['monitoring', 'students', 'groups', 'guides'];
       views.forEach(v => {
         const btn = document.getElementById(`nav-${v}`);
         const container = document.getElementById(`view-${v}-container`);
@@ -610,6 +718,11 @@
         badgeEl.textContent = 'VM ALLOCATION';
         descEl.textContent = 'Daftar penugasan siswa Driver & Navigator per mesin virtual Ubuntu.';
         loadAdminGroupsGrid();
+      } else if (viewName === 'guides') {
+        titleEl.textContent = 'Daftar Panduan & Modul Praktikum (PDF)';
+        badgeEl.textContent = 'PDF REPOSITORY';
+        descEl.textContent = 'Upload dan kelola modul PDF yang dapat diakses, dibaca online, atau diunduh oleh siswa.';
+        loadAdminGuides();
       }
     }
 
@@ -1390,6 +1503,177 @@
     setInterval(() => {
       if (currentView === 'monitoring') loadGroups();
     }, 8000);
-  </script>
+  
+    // =========================================================================
+    // PDF GUIDES MANAGEMENT SCRIPT
+    // =========================================================================
+    let adminGuidesList = [];
+
+    async function loadAdminGuides() {
+      const tbody = document.getElementById('guidesTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">Memuat daftar panduan...</td></tr>';
+      
+      try {
+        const res = await fetch('/api/guides');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.guides)) {
+          adminGuidesList = data.guides;
+          renderAdminGuidesTable();
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-rose-500 font-mono">Gagal memuat data panduan.</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-mono">Error koneksi: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderAdminGuidesTable() {
+      const tbody = document.getElementById('guidesTableBody');
+      if (!tbody) return;
+
+      if (adminGuidesList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">Belum ada file panduan PDF yang diupload.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = adminGuidesList.map((g, idx) => `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="py-3 px-4 font-mono font-bold text-slate-600">${idx + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-900 text-xs flex items-center gap-2">
+              <span class="text-amber-600 font-normal">📄</span>
+              <span>${escapeHtml(g.title)}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-sans mt-0.5 line-clamp-1">${escapeHtml(g.description || '-')}</div>
+          </td>
+          <td class="py-3 px-4 font-mono text-cyan-700 font-semibold">${escapeHtml(g.filename)}</td>
+          <td class="py-3 px-4 font-mono text-slate-600">${escapeHtml(g.size || '-')}</td>
+          <td class="py-3 px-4 font-mono text-slate-500">${escapeHtml(g.uploadedAt || '-')}</td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5 font-sans">
+              <a href="${g.url}" target="_blank" class="px-2.5 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 text-xs font-semibold flex items-center gap-1 transition" title="Buka / Baca Dokumen di Tab Baru">
+                <span>👁️</span> Buka
+              </a>
+              <a href="${g.url}?download=1" download class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1 transition" title="Unduh File PDF">
+                <span>⬇️</span> Unduh
+              </a>
+              <button onclick="deleteGuide('${g.id}', '${escapeHtml(g.title).replace(/'/g, "\'")}')" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold flex items-center gap-1 transition" title="Hapus Panduan">
+                <span>🗑️</span> Hapus
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openUploadGuideModal() {
+      document.getElementById('guideTitle').value = '';
+      document.getElementById('guideDescription').value = '';
+      document.getElementById('guideFileInput').value = '';
+      document.getElementById('guideFileNameLabel').textContent = 'Klik untuk memilih file PDF';
+      document.getElementById('guideFileSizeLabel').textContent = 'Maksimal ukuran disarankan 20 MB (.pdf)';
+      openModal('modalUploadGuide');
+    }
+
+    let selectedGuideFile = null;
+    function onGuideFileSelected(input) {
+      if (input.files && input.files[0]) {
+        selectedGuideFile = input.files[0];
+        document.getElementById('guideFileNameLabel').textContent = selectedGuideFile.name;
+        const sizeKB = (selectedGuideFile.size / 1024).toFixed(0);
+        const sizeStr = selectedGuideFile.size > 1024 * 1024 
+          ? (selectedGuideFile.size / (1024 * 1024)).toFixed(1) + ' MB' 
+          : `${sizeKB} KB`;
+        document.getElementById('guideFileSizeLabel').textContent = `Ukuran file: ${sizeStr}`;
+
+        // Auto-fill title if empty
+        const titleInput = document.getElementById('guideTitle');
+        if (!titleInput.value) {
+          titleInput.value = selectedGuideFile.name.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ');
+        }
+      }
+    }
+
+    async function handleUploadGuide(e) {
+      e.preventDefault();
+      const title = document.getElementById('guideTitle').value.trim();
+      const description = document.getElementById('guideDescription').value.trim();
+      const fileInput = document.getElementById('guideFileInput');
+
+      if (!fileInput.files || !fileInput.files[0]) {
+        alert('Silakan pilih file PDF terlebih dahulu!');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Hanya file berformat .pdf yang diperbolehkan!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitUploadGuide');
+      const oldText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Mengunggah file...</span>';
+
+      try {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          const base64Data = reader.result.split(',')[1];
+          try {
+            const res = await fetch('/api/admin/guides', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title,
+                description,
+                filename: file.name,
+                fileBase64: base64Data
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert(data.message || 'File PDF berhasil diupload!');
+              closeModal('modalUploadGuide');
+              loadAdminGuides();
+            } else {
+              alert('Gagal: ' + (data.message || 'Terjadi kesalahan saat upload'));
+            }
+          } catch (err) {
+            alert('Error pengiriman file: ' + err.message);
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = oldText;
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        alert('Gagal membaca file: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    }
+
+    async function deleteGuide(id, title) {
+      if (!confirm(`Apakah Anda yakin ingin menghapus panduan "${title}"?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/guides/${id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Panduan berhasil dihapus!');
+          loadAdminGuides();
+        } else {
+          alert('Gagal: ' + (data.message || 'Tidak dapat menghapus panduan'));
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+</script>
 </body>
 </html>
