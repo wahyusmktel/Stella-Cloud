@@ -489,7 +489,7 @@
       <span class="code-cmd">sudo systemctl</span> restart apache2
     </div>
 
-    <h3>Langkah 3: Inisialisasi Database SQLite &amp; Trusted Domains</h3>
+    <h3>Langkah 3: Inisialisasi Database SQLite &amp; Trusted Domains Bebas</h3>
     <p>Inisialisasi basis data SQLite dan akun admin langsung via utilitas terminal <code>occ</code>:</p>
     <div class="code-block">
       <div class="code-header"><span>BASH</span><span>1. Inisialisasi Database &amp; Admin</span></div>
@@ -497,12 +497,12 @@
       &nbsp;&nbsp;--database "sqlite" --admin-user "admin" --admin-pass "smktelkom"
     </div>
 
-    <p>Daftarkan IP server kelompok Anda agar diizinkan oleh sistem keamanan OwnCloud:</p>
+    <p>Aktifkan konfigurasi otomatis domain tepercaya dinamis &amp; HTTPS (semua domain IP Lokal Lab maupun Cloudflare Tunnel diizinkan seketika tanpa error):</p>
     <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>2. Izinkan Akses IP VM (Otomatis)</span></div>
-      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 1 --value="$(hostname -I | awk '{print $1}')"
+      <div class="code-header"><span>BASH</span><span>2. Izinkan Semua Domain Bebas &amp; HTTPS (Otomatis)</span></div>
+      <span class="code-cmd">curl</span> -sL https://raw.githubusercontent.com/wahyusmktel/Stella-Cloud/main/public/setup-domains.sh | <span class="code-cmd">sudo bash</span>
     </div>
-    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Atau ketik manual IP VM Anda: <code>sudo -u www-data php7.4 /var/www/owncloud/occ config:system:set trusted_domains 1 --value="10.219.30.xx"</code>)</em></p>
+    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Skrip ini otomatis mengizinkan IP VM <code>10.219.30.xx</code>, IP Portal, serta semua domain acak Cloudflare Tunnel <code>*.trycloudflare.com</code> tanpa perlu setting manual lagi).</em></p>
 
     <!-- UI Mockup OwnCloud Setup Wizard -->
     <div class="ui-mockup">
@@ -572,24 +572,20 @@
       </div>
     </div>
 
-    <h3>Langkah 3: Daftarkan Domain Tunnel ke Trusted Domains</h3>
-    <p>
-      Secara default, OwnCloud akan memblokir akses jika dibuka melalui domain publik baru demi keamanan. Masukkan URL subdomain tunnel Anda ke dalam daftar trusted domains nomor 2:
-    </p>
-    <div class="code-block">
-      <div class="code-header"><span>BASH</span><span>Daftarkan Subdomain Cloudflare Tunnel</span></div>
-      <span class="code-cmd">sudo -u www-data php7.4</span> /var/www/owncloud/occ config:system:set trusted_domains 2 \<br>
-      &nbsp;&nbsp;--value="nama-subdomain-anda.trycloudflare.com"
-    </div>
-    <p class="font-mono text-[7.5pt] text-slate-500"><em>(Ganti <code>nama-subdomain-anda.trycloudflare.com</code> dengan domain unik yang muncul di terminal langkah 2 di atas).</em></p>
-
-    <h3>Langkah 4: Pengujian Akses Internet dari Smartphone</h3>
+    <h3>Langkah 3: Pengujian Akses Internet dari Smartphone</h3>
     <ol>
+      <li><strong>Biarkan terminal tetap berjalan aktif</strong> (jangan tekan <code>Ctrl + C</code> agar tunnel Cloudflare tidak terputus).</li>
+      <li>Salin alamat tautan HTTPS publik yang muncul pada kotak informasi output (contoh: <code class="badge badge-cyan">https://random-subdomain-1234.trycloudflare.com</code>).</li>
       <li>Matikan sambungan Wi-Fi di smartphone Anda dan beralihlah ke <strong>Paket Data Seluler (Internet Luar)</strong>.</li>
-      <li>Ketikkan URL <code class="badge badge-cyan">https://random-subdomain-1234.trycloudflare.com</code> di browser HP Anda.</li>
-      <li>Login menggunakan akun admin OwnCloud yang tadi Anda buat.</li>
-      <li>Coba lakukan <strong>Upload 1 File Foto</strong> dari galeri HP Anda ke server OwnCloud!</li>
+      <li>Ketikkan atau buka URL subdomain tunnel tersebut di browser Google Chrome HP Anda.</li>
+      <li>Layar login OwnCloud akan langsung terbuka mulus tanpa gangguan error domain tidak tepercaya! Masuk dengan User: <code>admin</code> dan Password: <code>smktelkom</code>.</li>
+      <li>Coba lakukan <strong>Upload 1 File Foto</strong> dari galeri HP Anda ke penyimpanan cloud server untuk membuktikan integritas akses!</li>
     </ol>
+
+    <div class="alert alert-tip" style="margin-top: 8pt;">
+      <span>💡</span>
+      <div><strong>BEBAS HAMBATAN:</strong> Berkat skrip otomatisasi di BAB V Langkah 3, server OwnCloud mengenali alamat domain acak Cloudflare secara instan. Siswa tidak perlu lagi mematikan tunnel untuk mendaftarkan domain manual, sehingga URL publik tidak akan pernah berganti-ganti saat praktikum berlangsung!</div>
+    </div>
   </div>
 
   <div class="page-break"></div>
