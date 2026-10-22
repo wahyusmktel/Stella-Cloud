@@ -125,16 +125,39 @@ app.use('/preview/:ip', (req, res) => {
   req.pipe(proxyReq, { end: true });
 });
 
+let inMemoryDB = null;
+const FALLBACK_DB_PATH = '/dev/shm/stella-db.json';
+
 function readDB() {
+  if (inMemoryDB) return inMemoryDB;
+
   try {
-    return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    if (fs.existsSync(FALLBACK_DB_PATH)) {
+      inMemoryDB = JSON.parse(fs.readFileSync(FALLBACK_DB_PATH, 'utf-8'));
+      return inMemoryDB;
+    }
+  } catch (e) {}
+
+  try {
+    inMemoryDB = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    return inMemoryDB;
   } catch (e) {
     return { groups: [], students: [], adminPin: "admin123" };
   }
 }
 
 function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+  inMemoryDB = data;
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.warn('[DB WRITE WARNING] Cannot write to DB_PATH (read-only filesystem?), saving to RAM fallback:', e.message);
+    try {
+      fs.writeFileSync(FALLBACK_DB_PATH, JSON.stringify(data, null, 2));
+    } catch (err) {
+      console.error('[DB WRITE ERROR] Fallback save failed:', err.message);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -533,28 +556,35 @@ app.post('/api/vm/reboot', async (req, res) => {
 });
 
 app.post('/api/admin/reset-group', (req, res) => {
-  const { pin, groupId } = req.body;
-  const db = readDB();
+  try {
+    const { pin, groupId } = req.body;
+    const db = readDB();
 
-  if (pin !== db.adminPin) {
-    return res.status(403).json({ success: false, message: 'PIN Admin salah!' });
-  }
+    if (pin !== db.adminPin) {
+      return res.status(403).json({ success: false, message: 'PIN Admin salah!' });
+    }
 
-  const group = db.groups.find(g => g.id === parseInt(groupId));
-  if (group) {
-    group.members.forEach(nis => {
-      const st = db.students.find(s => s.nis === nis);
-      if (st) {
-        st.groupId = null;
-        st.isPaired = false;
+    const group = db.groups.find(g => g.id === parseInt(groupId));
+    if (group) {
+      if (group.members && Array.isArray(group.members)) {
+        group.members.forEach(nis => {
+          const st = db.students.find(s => s.nis === nis);
+          if (st) {
+            st.groupId = null;
+            st.isPaired = false;
+          }
+        });
       }
-    });
-    group.members = [];
-    writeDB(db);
-    return res.json({ success: true, message: `Kelompok ${group.name} berhasil di-reset.` });
-  }
+      group.members = [];
+      writeDB(db);
+      return res.json({ success: true, message: `Kelompok ${group.name} berhasil di-reset.` });
+    }
 
-  res.status(404).json({ success: false, message: 'Kelompok tidak ditemukan' });
+    return res.status(404).json({ success: false, message: 'Kelompok tidak ditemukan' });
+  } catch (err) {
+    console.error('[RESET GROUP ERROR]', err);
+    return res.status(500).json({ success: false, message: 'Gagal mereset kelompok: ' + err.message });
+  }
 });
 
 // Socket.IO SSH Bridge (High-Performance Low-Latency)
@@ -656,6 +686,16 @@ io.on('connection', (socket) => {
       try { tcpSocket.destroy(); } catch (e) {}
       tcpSocket = null;
     }
+  });
+});
+
+// Global JSON error handler to ensure API endpoints NEVER return HTML 500
+app.use((err, req, res, next) => {
+  console.error('[GLOBAL ERROR HANDLER]', err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Terjadi kesalahan internal pada server.'
   });
 });
 
