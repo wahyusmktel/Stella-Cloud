@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Monitor - Stella Cloud</title>
+  <title>Teacher Monitor & Lab Admin - Stella Cloud</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -32,9 +32,15 @@
     .animate-spin-slow {
       animation: spin-slow 1.2s linear infinite;
     }
+    .sidebar-active {
+      background: linear-gradient(90deg, rgba(6, 182, 212, 0.12) 0%, rgba(14, 165, 233, 0.04) 100%);
+      color: #0284c7;
+      border-right: 3px solid #0284c7;
+      font-weight: 600;
+    }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 p-4 sm:p-6 lg:p-8 relative">
+<body class="min-h-screen text-slate-800 flex flex-col md:flex-row relative">
 
   <!-- FLOATING REAL-TIME OPERATION TOAST NOTIFICATION -->
   <div id="operationToast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-150%] opacity-0 pointer-events-none max-w-md w-full">
@@ -48,30 +54,103 @@
         </div>
         <div>
           <div id="toastTitle" class="text-xs font-bold text-slate-900 font-mono tracking-tight uppercase">Operasi Berjalan</div>
-          <p id="toastMessage" class="text-[11px] text-slate-500 mt-0.5">Sedang mengeksekusi instruksi daya ke Hyper-V...</p>
+          <p id="toastMessage" class="text-[11px] text-slate-500 mt-0.5">Sedang mengeksekusi instruksi...</p>
         </div>
       </div>
       <span id="toastTime" class="text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">LIVE</span>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto space-y-6">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between border-r border-slate-800 z-40 transition-all duration-300">
+    <div>
+      <!-- Brand & Header -->
+      <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold text-white tracking-wide font-mono">STELLA CLOUD</h1>
+            <p class="text-[11px] text-cyan-400 font-medium">SMK Telkom Lampung</p>
+          </div>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">ADMIN</span>
+      </div>
 
-    <!-- Header Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-cyan-500/20">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Navigation Menu -->
+      <div class="p-3 space-y-1 font-mono text-xs">
+        <div class="px-3 py-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Navigasi Utama</div>
+        
+        <button onclick="switchView('monitoring')" id="nav-monitoring" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left sidebar-active">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring Guru</h1>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">CLOUD CONSOLE</span>
+          <span>Monitoring VM</span>
+        </button>
+
+        <button onclick="switchView('students')" id="nav-students" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left hover:bg-slate-800/60 hover:text-white">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <span>Kelola Data Siswa</span>
+        </button>
+
+        <button onclick="switchView('groups')" id="nav-groups" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left hover:bg-slate-800/60 hover:text-white">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span>Status 15 Kelompok</span>
+        </button>
+
+        <div class="pt-4 px-3 py-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Akses Cepat</div>
+
+        <a href="/" target="_blank" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition hover:bg-slate-800/60 hover:text-white">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            <span>Portal Siswa</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Kontrol daya real-time (Start/Stop), sesi kelas, dan telemetri VM.</p>
+          <span class="text-[10px] text-slate-500">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Sidebar Bottom (Profile & Logout) -->
+    <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-900/60 border border-cyan-700/60 flex items-center justify-center text-cyan-300 font-bold font-mono text-xs">
+            AD
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white font-mono leading-none">Administrator</div>
+            <div class="text-[10px] text-slate-400 mt-1">Guru Lab TKJ</div>
+          </div>
         </div>
+        <button onclick="handleLogout()" class="p-2 rounded-lg bg-rose-950/60 text-rose-400 hover:bg-rose-900/80 hover:text-rose-200 border border-rose-800/50 transition" title="Keluar">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- Top Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 id="viewTitle" class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Panel Monitoring VM Siswa</h1>
+          <span id="viewBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 font-semibold">CLOUD CONSOLE</span>
+        </div>
+        <p id="viewDesc" class="text-xs text-slate-500 mt-0.5">Kontrol daya real-time (Start/Stop), sesi kelas, dan telemetri VM.</p>
       </div>
 
       <div class="flex items-center gap-2">
@@ -79,10 +158,7 @@
           <span id="pollIndicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span id="pollStatusText">Polling: <strong class="text-slate-800">2s</strong></span>
         </div>
-        <a href="/" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition shadow-sm">
-          Portal Siswa
-        </a>
-        <button onclick="handleLogout()" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold transition shadow-sm flex items-center gap-1.5" title="Keluar dari Panel Admin">
+        <button onclick="handleLogout()" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold transition shadow-sm flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
           </svg>
@@ -91,149 +167,486 @@
       </div>
     </div>
 
-    <!-- MASTER POWER CONTROL & CLASS SWITCHER BAR -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      
-      <!-- Box 1: Sesi Kelas -->
-      <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-cyan-600">
-        <div>
+    <!-- =================================================================== -->
+    <!-- VIEW 1: MONITORING VM & SERVER -->
+    <!-- =================================================================== -->
+    <div id="view-monitoring-container" class="space-y-6">
+
+      <!-- MASTER POWER CONTROL & CLASS SWITCHER BAR -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Box 1: Sesi Kelas -->
+        <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-cyan-600">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Sesi Kelas Aktif</h2>
+              <span id="activeSessionBadge" class="px-2 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Tugas & harddisk tersimpan terpisah per kelas.</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm">
+              XI TKJ 1
+            </button>
+            <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
+              XI TKJ 2
+            </button>
+          </div>
+        </div>
+
+        <!-- Box 2: Master Power Control 15 VM -->
+        <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-emerald-600">
+          <div>
+            <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Master Daya (15 VM)</h2>
+            <p class="text-[11px] text-slate-400 mt-1">Nyalakan/matikan semua VM serentak.</p>
+          </div>
           <div class="flex items-center gap-2">
-            <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Sesi Kelas Aktif</h2>
-            <span id="activeSessionBadge" class="px-2 py-0.5 rounded-full font-mono text-xs font-bold bg-cyan-600 text-white">XI-TKJ-1</span>
+            <button id="btnStartAll" onclick="powerAll('start-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 shadow-sm">
+              <span>▶️</span>
+              <span>Nyalakan Semua</span>
+            </button>
+            <button id="btnStopAll" onclick="powerAll('stop-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
+              <span>⏹️</span>
+              <span>Matikan Semua</span>
+            </button>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">Tugas tersimpan per kelas.</p>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="switchSession('XI-TKJ-1')" id="btnSessionTKJ1" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-cyan-600 text-white shadow-sm">
-            XI TKJ 1
-          </button>
-          <button onclick="switchSession('XI-TKJ-2')" id="btnSessionTKJ2" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200">
-            XI TKJ 2
-          </button>
         </div>
       </div>
 
-      <!-- Box 2: Master Power Control 15 VM -->
-      <div class="cyber-card rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-3 border-l-4 border-l-emerald-600">
-        <div>
-          <h2 class="text-xs font-bold text-slate-500 uppercase font-mono">Master Daya (15 VM)</h2>
-          <p class="text-[11px] text-slate-400 mt-1">Nyalakan/matikan semua VM serentak.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="btnStartAll" onclick="powerAll('start-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 shadow-sm">
-            <span id="iconStartAll">▶️</span>
-            <span>Nyalakan Semua</span>
-          </button>
-          <button id="btnStopAll" onclick="powerAll('stop-all')" class="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
-            <span id="iconStopAll">⏹️</span>
-            <span>Matikan Semua</span>
-          </button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- METRICS CARDS & REAL-TIME CHARTS (HOST SERVER) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <div class="cyber-card rounded-2xl p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host CPU Usage (Portal Server)</h2>
-              <div class="flex items-baseline gap-2">
-                <span id="cpuPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
-                <span id="cpuCoresVal" class="text-xs text-slate-400 font-mono">8 Cores</span>
+      <!-- METRICS CARDS & REAL-TIME CHARTS (HOST SERVER) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="cyber-card rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host CPU Usage (Portal Server)</h2>
+                <div class="flex items-baseline gap-2">
+                  <span id="cpuPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
+                  <span id="cpuCoresVal" class="text-xs text-slate-400 font-mono">8 Cores</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="text-right">
-            <span id="cpuBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Normal</span>
-          </div>
-        </div>
-        <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 130px; position: relative;">
-            <canvas id="cpuChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="cyber-card rounded-2xl p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7zm0 4h16M8 4v3m8-3v3"/>
-              </svg>
+            <div class="text-right">
+              <span id="cpuBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Normal</span>
             </div>
-            <div>
-              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host RAM (Portal Server)</h2>
-              <div class="flex items-baseline gap-2">
-                <span id="memPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
-                <span id="memDetailVal" class="text-xs text-slate-400 font-mono">0 GB / 0 GB</span>
+          </div>
+          <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+            <div style="height: 130px; position: relative;">
+              <canvas id="cpuChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="cyber-card rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7zm0 4h16M8 4v3m8-3v3"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">Host RAM (Portal Server)</h2>
+                <div class="flex items-baseline gap-2">
+                  <span id="memPercentVal" class="text-2xl font-bold text-slate-900 font-mono">0.0%</span>
+                  <span id="memDetailVal" class="text-xs text-slate-400 font-mono">0 GB / 0 GB</span>
+                </div>
               </div>
             </div>
+            <div class="text-right">
+              <span id="memBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Lega</span>
+            </div>
           </div>
-          <div class="text-right">
-            <span id="memBadge" class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Lega</span>
-          </div>
-        </div>
-        <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
-          <div style="height: 130px; position: relative;">
-            <canvas id="memChart"></canvas>
+          <div class="bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+            <div style="height: 130px; position: relative;">
+              <canvas id="memChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- 15 VM GROUPS TABLE WITH LIVE TRANSITIONS -->
+      <div class="cyber-card rounded-2xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+          <div>
+            <h2 class="font-bold text-sm text-slate-800">Status 15 Server VM Siswa</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Indikator transisi daya real-time dengan auto-refresh instan.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadGroups()" class="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
+              <svg id="refreshIcon" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-mono uppercase text-[11px] border-b border-slate-200">
+              <tr>
+                <th class="p-3.5">Kelompok</th>
+                <th class="p-3.5">IP Server (VM)</th>
+                <th class="p-3.5">Status Power</th>
+                <th class="p-3.5">RAM VM Siswa</th>
+                <th class="p-3.5">CPU VM</th>
+                <th class="p-3.5">Anggota Siswa</th>
+                <th class="p-3.5 text-right">Kontrol Daya</th>
+              </tr>
+            </thead>
+            <tbody id="groupTableBody" class="divide-y divide-slate-100 font-mono">
+              <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat status server...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
-    <!-- 15 VM GROUPS TABLE WITH LIVE TRANSITIONS -->
-    <div class="cyber-card rounded-2xl overflow-hidden">
-      <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+    <!-- =================================================================== -->
+    <!-- VIEW 2: KELOLA DATA SISWA -->
+    <!-- =================================================================== -->
+    <div id="view-students-container" class="hidden space-y-6">
+
+      <!-- Summary KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-blue-600">
+          <div class="text-[11px] font-mono uppercase font-bold text-slate-400">Total Siswa</div>
+          <div id="kpiTotalStudents" class="text-2xl font-bold font-mono text-slate-900 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Terdaftar di sistem</div>
+        </div>
+        <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-emerald-600">
+          <div class="text-[11px] font-mono uppercase font-bold text-slate-400">Sudah Berpasangan</div>
+          <div id="kpiPairedStudents" class="text-2xl font-bold font-mono text-emerald-600 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Memiliki kelompok VM</div>
+        </div>
+        <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-amber-600">
+          <div class="text-[11px] font-mono uppercase font-bold text-slate-400">Belum Berpasangan</div>
+          <div id="kpiUnpairedStudents" class="text-2xl font-bold font-mono text-amber-600 mt-1">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Siap setup kelompok</div>
+        </div>
+        <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-purple-600">
+          <div class="text-[11px] font-mono uppercase font-bold text-slate-400">Total Kelas</div>
+          <div id="kpiClassesCount" class="text-2xl font-bold font-mono text-purple-600 mt-1">2</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">XI TKJ 1 &amp; XI TKJ 2</div>
+        </div>
+      </div>
+
+      <!-- Toolbar & Actions -->
+      <div class="cyber-card rounded-2xl p-4 space-y-3">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          
+          <!-- Filters & Search -->
+          <div class="flex flex-1 flex-wrap items-center gap-2">
+            <div class="relative flex-1 min-w-[200px]">
+              <input type="text" id="studentSearchInput" oninput="renderStudentsTable()" placeholder="Cari NIS atau Nama Siswa..." 
+                class="w-full pl-9 pr-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+
+            <select id="studentClassFilter" onchange="renderStudentsTable()" class="text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
+              <option value="ALL">Semua Kelas</option>
+              <option value="XI-TKJ-1">XI-TKJ-1</option>
+              <option value="XI-TKJ-2">XI-TKJ-2</option>
+            </select>
+
+            <select id="studentStatusFilter" onchange="renderStudentsTable()" class="text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
+              <option value="ALL">Semua Status</option>
+              <option value="PAIRED">Sudah Berpasangan</option>
+              <option value="UNPAIRED">Belum Berpasangan</option>
+            </select>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="openAddStudentModal()" class="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-mono text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shadow-cyan-600/20">
+              <span>➕</span>
+              <span>Tambah Siswa</span>
+            </button>
+            <button onclick="openBatchStudentModal()" class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-mono text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+              <span>📥</span>
+              <span>Import Batch</span>
+            </button>
+            <button onclick="clearDummyStudents()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-mono text-xs font-semibold transition" title="Hapus seluruh akun siswa dummy contoh (2401xx / 2402xx)">
+              🧹 Bersihkan Dummy
+            </button>
+            <button onclick="resetAllPairings()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-mono text-xs font-semibold transition" title="Kosongkan semua pasangan kelompok siswa">
+              🔄 Reset Pasangan
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div class="cyber-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-mono uppercase text-[11px] border-b border-slate-200">
+              <tr>
+                <th class="p-3.5 w-12 text-center">No</th>
+                <th class="p-3.5">NIS</th>
+                <th class="p-3.5">Nama Lengkap Siswa</th>
+                <th class="p-3.5">Kelas</th>
+                <th class="p-3.5">Status Kelompok VM</th>
+                <th class="p-3.5">Password</th>
+                <th class="p-3.5 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody" class="divide-y divide-slate-100 font-mono">
+              <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat data siswa...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- VIEW 3: STATUS 15 KELOMPOK VM -->
+    <!-- =================================================================== -->
+    <div id="view-groups-container" class="hidden space-y-6">
+      
+      <div class="cyber-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div>
-          <h2 class="font-bold text-sm text-slate-800">Status 15 Server VM Siswa</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Indikator transisi daya real-time dengan auto-refresh instan.</p>
+          <h2 class="font-bold text-sm text-slate-800">Alokasi 15 Server VM Kelompok Siswa</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Setiap VM dikelola oleh 2 siswa (Driver &amp; Navigator). Anda dapat mereset kelompok jika diperlukan.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="loadGroups()" class="text-xs px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
-            <svg id="refreshIcon" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            <span>Refresh</span>
-          </button>
-        </div>
+        <button onclick="loadAdminGroupsGrid()" class="text-xs px-3.5 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
+          <span>🔄</span>
+          <span>Perbarui Tampilan</span>
+        </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 text-slate-500 font-mono uppercase text-[11px] border-b border-slate-200">
-            <tr>
-              <th class="p-3.5">Kelompok</th>
-              <th class="p-3.5">IP Server (VM)</th>
-              <th class="p-3.5">Status Power</th>
-              <th class="p-3.5">RAM VM Siswa</th>
-              <th class="p-3.5">CPU VM</th>
-              <th class="p-3.5">Anggota Siswa</th>
-              <th class="p-3.5 text-right">Kontrol Daya</th>
-            </tr>
-          </thead>
-          <tbody id="groupTableBody" class="divide-y divide-slate-100 font-mono">
-            <tr><td colspan="7" class="p-6 text-center text-slate-400">Memuat status server...</td></tr>
-          </tbody>
-        </table>
+      <!-- 15 Cards Grid -->
+      <div id="groupsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected via JavaScript -->
       </div>
+
     </div>
 
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 1: TAMBAH SISWA -->
+  <!-- =================================================================== -->
+  <div id="modalAddStudent" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>➕</span> Tambah Siswa Baru
+        </h3>
+        <button onclick="closeModal('modalAddStudent')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <form onsubmit="handleAddStudent(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nomor Induk Siswa (NIS) <span class="text-rose-500">*</span></label>
+          <input type="text" id="addNis" required placeholder="Contoh: 240131" class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+          <input type="text" id="addName" required placeholder="Contoh: Ahmad Rizki" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Kelas <span class="text-rose-500">*</span></label>
+          <select id="addClass" class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500">
+            <option value="XI-TKJ-1">XI-TKJ-1</option>
+            <option value="XI-TKJ-2">XI-TKJ-2</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Password Login Siswa</label>
+          <input type="text" id="addPassword" value="smktelkom" placeholder="Default: smktelkom" class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500">
+          <p class="text-[10px] text-slate-400 mt-1">Default: <code>smktelkom</code> jika dikosongkan.</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalAddStudent')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition shadow-sm shadow-cyan-600/20">Simpan Siswa</button>
+        </div>
+      </form>
+    </div>
   </div>
 
+  <!-- =================================================================== -->
+  <!-- MODAL 2: EDIT SISWA -->
+  <!-- =================================================================== -->
+  <div id="modalEditStudent" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>✏️</span> Edit Data Siswa
+        </h3>
+        <button onclick="closeModal('modalEditStudent')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <form onsubmit="handleEditStudent(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">NIS (Tidak dapat diubah)</label>
+          <input type="text" id="editNis" disabled class="w-full px-3 py-2 font-mono bg-slate-100 border border-slate-200 rounded-xl text-slate-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap Siswa</label>
+          <input type="text" id="editName" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Kelas</label>
+          <select id="editClass" class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500">
+            <option value="XI-TKJ-1">XI-TKJ-1</option>
+            <option value="XI-TKJ-2">XI-TKJ-2</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Password Login Baru</label>
+          <input type="text" id="editPassword" class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalEditStudent')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition shadow-sm shadow-cyan-600/20">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 3: BATCH / IMPORT SISWA -->
+  <!-- =================================================================== -->
+  <div id="modalBatchStudent" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>📥</span> Import Data Siswa Massal (Batch)
+        </h3>
+        <button onclick="closeModal('modalBatchStudent')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div class="text-xs space-y-2">
+        <p class="text-slate-600">
+          Tempelkan (Paste) data siswa dengan format baris (dapat langsung disalin dari Microsoft Excel atau Notepad):
+        </p>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-[11px] text-slate-600 space-y-1">
+          <div><strong>Format Baris:</strong> <code>NIS, Nama Lengkap, Kelas, Password</code></div>
+          <div class="text-slate-400">Contoh:</div>
+          <div class="text-cyan-700">240101, Budi Santoso, XI-TKJ-1, smktelkom</div>
+          <div class="text-cyan-700">240102, Siti Aisyah, XI-TKJ-1, smktelkom</div>
+          <div class="text-cyan-700">240201, Dimas Pratama, XI-TKJ-2, smktelkom</div>
+        </div>
+        <p class="text-[11px] text-slate-400 italic">*Password bersifat opsional. Jika tidak ditulis, otomatis memakai <code>smktelkom</code>.</p>
+      </div>
+
+      <form onsubmit="handleBatchImport(event)" class="space-y-3.5 text-xs">
+        <textarea id="batchTextarea" rows="8" required placeholder="Tempelkan daftar siswa di sini..." class="w-full px-3 py-2 font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs"></textarea>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" onclick="loadSampleBatchTemplate()" class="text-indigo-600 hover:text-indigo-800 font-semibold underline text-[11px]">
+            Gunakan Template Contoh
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeModal('modalBatchStudent')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow-sm shadow-indigo-600/20">Proses &amp; Simpan</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
   <script>
     let currentSession = 'XI-TKJ-1';
+    let currentView = 'monitoring';
+    let allStudentsData = [];
     let pendingTransitions = {}; // vmName -> 'starting' | 'stopping' | 'rebuilding'
     let fastPollTimer = null;
 
+    // View Navigation Switcher
+    function switchView(viewName) {
+      currentView = viewName;
+
+      // Update sidebar active classes
+      const views = ['monitoring', 'students', 'groups'];
+      views.forEach(v => {
+        const btn = document.getElementById(`nav-${v}`);
+        const container = document.getElementById(`view-${v}-container`);
+        if (v === viewName) {
+          btn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left sidebar-active';
+          container.classList.remove('hidden');
+        } else {
+          btn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-left hover:bg-slate-800/60 hover:text-white';
+          container.classList.add('hidden');
+        }
+      });
+
+      // Update header titles
+      const titleEl = document.getElementById('viewTitle');
+      const badgeEl = document.getElementById('viewBadge');
+      const descEl = document.getElementById('viewDesc');
+
+      if (viewName === 'monitoring') {
+        titleEl.textContent = 'Panel Monitoring VM Siswa';
+        badgeEl.textContent = 'CLOUD CONSOLE';
+        descEl.textContent = 'Kontrol daya real-time (Start/Stop), sesi kelas, dan telemetri VM.';
+        loadGroups();
+      } else if (viewName === 'students') {
+        titleEl.textContent = 'Kelola Data Siswa & Akun Login';
+        badgeEl.textContent = 'STUDENT DIRECTORY';
+        descEl.textContent = 'Hanya NIS yang terdaftar di halaman ini yang dapat login ke portal siswa.';
+        loadStudents();
+      } else if (viewName === 'groups') {
+        titleEl.textContent = 'Status 15 Kelompok Server VM';
+        badgeEl.textContent = 'VM ALLOCATION';
+        descEl.textContent = 'Daftar penugasan siswa Driver & Navigator per mesin virtual Ubuntu.';
+        loadAdminGroupsGrid();
+      }
+    }
+
+    // Modal Handlers
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openAddStudentModal() {
+      document.getElementById('addNis').value = '';
+      document.getElementById('addName').value = '';
+      document.getElementById('addClass').value = currentSession;
+      document.getElementById('addPassword').value = 'smktelkom';
+      openModal('modalAddStudent');
+    }
+
+    function openBatchStudentModal() {
+      document.getElementById('batchTextarea').value = '';
+      openModal('modalBatchStudent');
+    }
+
+    function loadSampleBatchTemplate() {
+      const tpl = `240101, Muhammad Rizky, XI-TKJ-1, smktelkom\n240102, Siti Nurhaliza, XI-TKJ-1, smktelkom\n240103, Fajar Pratama, XI-TKJ-1, smktelkom\n240201, Bayu Saputra, XI-TKJ-2, smktelkom\n240202, Annisa Rahma, XI-TKJ-2, smktelkom`;
+      document.getElementById('batchTextarea').value = tpl;
+    }
+
+    // Chart.js Configuration
     const MAX_POINTS = 20;
     const timeLabels = Array(MAX_POINTS).fill('');
     const cpuData = Array(MAX_POINTS).fill(0);
@@ -305,7 +718,6 @@
       }, delay);
     }
 
-    // Fast Polling during transitions (1.2s instead of 8s)
     function triggerFastPolling(durationSeconds = 12) {
       document.getElementById('pollIndicator').className = 'w-2 h-2 rounded-full bg-cyan-500 animate-ping';
       document.getElementById('pollStatusText').innerHTML = 'Sinkronisasi Cepat: <strong class="text-cyan-700">1.2s</strong>';
@@ -320,6 +732,347 @@
       }, durationSeconds * 1000);
     }
 
+    // ===================================================================
+    // STUDENT MANAGEMENT LOGIC (CRUD & BATCH)
+    // ===================================================================
+    async function loadStudents() {
+      const tbody = document.getElementById('studentTableBody');
+      try {
+        const res = await fetch('/api/admin/students');
+        const data = await res.json();
+        if (!data.success) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-rose-500">${data.message || 'Gagal memuat siswa.'}</td></tr>`;
+          return;
+        }
+
+        allStudentsData = data.students || [];
+        updateStudentKPIs(allStudentsData);
+        renderStudentsTable();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-rose-500">Error menghubungi server: ${err.message}</td></tr>`;
+      }
+    }
+
+    function updateStudentKPIs(students) {
+      const total = students.length;
+      const paired = students.filter(s => s.isPaired).length;
+      const unpaired = total - paired;
+      const classes = new Set(students.map(s => s.class)).size;
+
+      document.getElementById('kpiTotalStudents').textContent = total;
+      document.getElementById('kpiPairedStudents').textContent = paired;
+      document.getElementById('kpiUnpairedStudents').textContent = unpaired;
+      document.getElementById('kpiClassesCount').textContent = Math.max(classes, 1);
+    }
+
+    function renderStudentsTable() {
+      const tbody = document.getElementById('studentTableBody');
+      const searchQuery = (document.getElementById('studentSearchInput').value || '').toLowerCase().trim();
+      const classFilter = document.getElementById('studentClassFilter').value;
+      const statusFilter = document.getElementById('studentStatusFilter').value;
+
+      let filtered = allStudentsData.filter(s => {
+        if (classFilter !== 'ALL' && s.class !== classFilter) return false;
+        if (statusFilter === 'PAIRED' && !s.isPaired) return false;
+        if (statusFilter === 'UNPAIRED' && s.isPaired) return false;
+        if (searchQuery) {
+          const matchNis = String(s.nis).toLowerCase().includes(searchQuery);
+          const matchName = String(s.name).toLowerCase().includes(searchQuery);
+          if (!matchNis && !matchName) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Tidak ada siswa yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      filtered.forEach((st, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition';
+
+        let statusBadge = '';
+        if (st.isPaired) {
+          statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${st.groupName || 'Terpasang'} (${st.groupIp || ''})
+          </span>`;
+        } else {
+          statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-semibold">
+            Belum Berpasangan
+          </span>`;
+        }
+
+        let unpairBtn = '';
+        if (st.isPaired) {
+          unpairBtn = `<button onclick="unpairStudent('${st.nis}', '${st.name}')" class="text-[10px] px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg transition" title="Lepas dari kelompok">🔓 Lepas</button>`;
+        }
+
+        tr.innerHTML = `
+          <td class="p-3.5 text-center text-slate-400 font-sans">${idx + 1}</td>
+          <td class="p-3.5 font-bold text-slate-900">${st.nis}</td>
+          <td class="p-3.5 font-sans font-semibold text-slate-800">${st.name}</td>
+          <td class="p-3.5">
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold">${st.class}</span>
+          </td>
+          <td class="p-3.5">${statusBadge}</td>
+          <td class="p-3.5 text-slate-500 font-mono text-[11px]">${st.password || 'smktelkom'}</td>
+          <td class="p-3.5 text-right font-sans space-x-1">
+            <button onclick="openEditStudentModal('${st.nis}', '${st.name.replace(/'/g, "\\'")}', '${st.class}', '${st.password}')" class="text-[10px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition" title="Edit Siswa">✏️ Edit</button>
+            ${unpairBtn}
+            <button onclick="deleteStudent('${st.nis}', '${st.name.replace(/'/g, "\\'")}')" class="text-[10px] px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition" title="Hapus Siswa">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function handleAddStudent(e) {
+      e.preventDefault();
+      const nis = document.getElementById('addNis').value.trim();
+      const name = document.getElementById('addName').value.trim();
+      const className = document.getElementById('addClass').value;
+      const password = document.getElementById('addPassword').value.trim() || 'smktelkom';
+
+      try {
+        const res = await fetch('/api/admin/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nis, name, class: className, password })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert('Gagal: ' + data.message);
+          return;
+        }
+        closeModal('modalAddStudent');
+        showToast('Siswa Ditambahkan', data.message, false);
+        hideToast();
+        loadStudents();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function openEditStudentModal(nis, name, className, password) {
+      document.getElementById('editNis').value = nis;
+      document.getElementById('editName').value = name;
+      document.getElementById('editClass').value = className;
+      document.getElementById('editPassword').value = password || 'smktelkom';
+      openModal('modalEditStudent');
+    }
+
+    async function handleEditStudent(e) {
+      e.preventDefault();
+      const nis = document.getElementById('editNis').value;
+      const name = document.getElementById('editName').value.trim();
+      const className = document.getElementById('editClass').value;
+      const password = document.getElementById('editPassword').value.trim();
+
+      try {
+        const res = await fetch(`/api/admin/students/${encodeURIComponent(nis)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, class: className, password })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert('Gagal: ' + data.message);
+          return;
+        }
+        closeModal('modalEditStudent');
+        showToast('Data Diperbarui', data.message, false);
+        hideToast();
+        loadStudents();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function deleteStudent(nis, name) {
+      if (!confirm(`Hapus data siswa [${name}] (NIS: ${nis}) dari sistem?\n\nSiswa ini tidak akan dapat login lagi.`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/students/${encodeURIComponent(nis)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert('Gagal: ' + data.message);
+          return;
+        }
+        showToast('Siswa Dihapus', data.message, false);
+        hideToast();
+        loadStudents();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function unpairStudent(nis, name) {
+      if (!confirm(`Lepaskan siswa [${name}] dari kelompok VM?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/students/${encodeURIComponent(nis)}/unpair`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        showToast('Kelompok Dilepas', data.message, false);
+        hideToast();
+        loadStudents();
+        loadGroups();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function handleBatchImport(e) {
+      e.preventDefault();
+      const text = document.getElementById('batchTextarea').value.trim();
+      if (!text) return;
+
+      const lines = text.split('\n');
+      const students = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        const parts = trimmed.split(/[,;\t]+/).map(p => p.trim());
+        if (parts.length >= 2) {
+          const nis = parts[0];
+          const name = parts[1];
+          const className = parts[2] || currentSession;
+          const password = parts[3] || 'smktelkom';
+          students.push({ nis, name, class: className, password });
+        }
+      }
+
+      if (students.length === 0) {
+        alert('Tidak ada data siswa valid yang ditemukan. Harap gunakan format: NIS, Nama, Kelas');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/students/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ students })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert('Gagal import: ' + data.message);
+          return;
+        }
+        closeModal('modalBatchStudent');
+        showToast('Import Berhasil', data.message, false);
+        hideToast();
+        loadStudents();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function clearDummyStudents() {
+      if (!confirm('⚠️ BERSIHKAN SISWA CONTOH\n\nApakah Anda yakin ingin menghapus seluruh akun dummy contoh (2401xx / 2402xx)?\n\nData siswa asli yang Anda input manual atau import tidak akan dihapus.')) return;
+
+      try {
+        const res = await fetch('/api/admin/students/clear-dummy', {
+          method: 'POST'
+        });
+        const data = await res.json();
+        showToast('Selesai', data.message, false);
+        hideToast();
+        loadStudents();
+        loadGroups();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function resetAllPairings() {
+      if (!confirm('⚠️ RESET SELURUH PASANGAN\n\nApakah Anda yakin ingin melepaskan semua pasangan siswa dan mengosongkan 15 server VM?\n\n(Data akun siswa tetap tersimpan, hanya kelompoknya yang dikosongkan).')) return;
+
+      try {
+        const res = await fetch('/api/admin/students/reset-pairings', {
+          method: 'POST'
+        });
+        const data = await res.json();
+        showToast('Reset Selesai', data.message, false);
+        hideToast();
+        loadStudents();
+        loadGroups();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // ===================================================================
+    // VIEW 3: STATUS 15 KELOMPOK GRID
+    // ===================================================================
+    async function loadAdminGroupsGrid() {
+      const container = document.getElementById('groupsGridContainer');
+      container.innerHTML = '<div class="col-span-full p-6 text-center text-slate-400">Memuat status kelompok...</div>';
+
+      try {
+        const res = await fetch('/api/admin/groups');
+        const data = await res.json();
+        if (!data.success) return;
+
+        container.innerHTML = '';
+        data.groups.forEach(g => {
+          const card = document.createElement('div');
+          card.className = 'cyber-card rounded-2xl p-4 flex flex-col justify-between space-y-3';
+
+          const isOccupied = g.members && g.members.length > 0;
+          const statusBadge = isOccupied
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">TERISI (2 SISWA)</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">KOSONG / TERSEDIA</span>';
+
+          let membersHtml = '';
+          if (isOccupied) {
+            membersHtml = g.members.map((m, idx) => `
+              <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                <span class="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-[10px]">${idx === 0 ? 'D' : 'N'}</span>
+                <div class="truncate">
+                  <div class="font-semibold text-slate-800 truncate">${m.name}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">NIS: ${m.nis} (${m.class || '-'})</div>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            membersHtml = `<div class="p-4 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">VM Kosong — Belum ada siswa berpasangan</div>`;
+          }
+
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-sm font-mono">${g.name}</h3>
+                  <p class="text-[11px] text-cyan-600 font-mono font-semibold">${g.ip}</p>
+                </div>
+                ${statusBadge}
+              </div>
+              <div class="mt-3 space-y-1.5">
+                ${membersHtml}
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-[10px] font-mono text-slate-400">ID VM: #${g.id}</span>
+              ${isOccupied ? `<button onclick="resetGroup(${g.id})" class="text-[11px] px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition font-semibold">Kosongkan VM</button>` : '<span class="text-[11px] text-emerald-600 font-mono">Siap Pakai</span>'}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = `<div class="col-span-full p-6 text-center text-rose-500">Gagal memuat status kelompok: ${err.message}</div>`;
+      }
+    }
+
+    // ===================================================================
+    // VIEW 1: MONITORING CONTROLLERS
+    // ===================================================================
     async function checkSession() {
       try {
         const res = await fetch('/api/session/current');
@@ -356,7 +1109,7 @@
         const res = await fetch('/api/session/switch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targetClass, pin })
+          body: JSON.stringify({ targetClass })
         });
         const data = await res.json();
         showToast('Selesai', `Sesi berhasil dialihkan ke ${targetClass}`, false);
@@ -372,22 +1125,20 @@
 
     async function togglePowerVM(vmName, action) {
       const isStart = action === 'start';
-      let pin = '';
       if (!isStart) {
         if (!confirm(`Matikan mesin virtual [${vmName}]?`)) return;
       }
 
-      // Set pending state visually
       pendingTransitions[vmName] = isStart ? 'starting' : 'stopping';
       showToast(isStart ? 'Menyalakan Mesin' : 'Mematikan Mesin', `Sedang memproses instruksi daya untuk ${vmName}...`);
-      loadGroups(); // Immediately redraw table with pending state
+      loadGroups();
       triggerFastPolling(8);
 
       try {
         const res = await fetch('/api/vm/power', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vmName, action, pin })
+          body: JSON.stringify({ vmName, action })
         });
         const data = await res.json();
         showToast('Instruksi Terkirim', data.message || `Perintah daya ${vmName} dieksekusi.`, false);
@@ -403,7 +1154,6 @@
       const actionText = isStart ? 'Menyalakan Seluruh 15 VM' : 'Mematikan Seluruh 15 VM';
       if (!confirm(`⚠️ PERINGATAN DAYA MASSAL\n\nApakah Anda yakin ingin ${actionText}?`)) return;
 
-      // Mark all VMs as transitioning
       for (let i = 1; i <= 15; i++) {
         const num = String(i).padStart(2, '0');
         pendingTransitions[`TKJ-Kelompok-${num}`] = isStart ? 'starting' : 'stopping';
@@ -417,7 +1167,7 @@
         const res = await fetch('/api/vm/power', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, pin })
+          body: JSON.stringify({ action })
         });
         const data = await res.json();
         showToast('Daya Massal Aktif', data.message || `Seluruh 15 VM sedang diproses.`, false);
@@ -447,7 +1197,7 @@
         const res = await fetch('/api/vm/rebuild', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vmName, pin })
+          body: JSON.stringify({ vmName })
         });
         const data = await res.json();
         if (!data.success) {
@@ -468,8 +1218,9 @@
     }
 
     async function updateMetrics() {
+      if (currentView !== 'monitoring') return;
       try {
-        const res = await fetch('/api/system/metrics');
+        const res = await fetch('/api/system/stats');
         const data = await res.json();
         if (!data.success) return;
 
@@ -489,6 +1240,7 @@
     }
 
     async function loadGroups() {
+      if (currentView !== 'monitoring') return;
       const tbody = document.getElementById('groupTableBody');
       try {
         const res = await fetch('/api/groups/status');
@@ -500,8 +1252,6 @@
           tr.className = 'hover:bg-slate-50/80 transition';
 
           const pending = pendingTransitions[g.name];
-          
-          // Clear pending transition once live state matches expectation
           if (pending === 'starting' && g.isOnline) {
             delete pendingTransitions[g.name];
           } else if (pending === 'stopping' && !g.isOnline) {
@@ -530,7 +1280,6 @@
           const m = g.metrics || { usedMB: 0, totalMB: 384, memPercent: 0, cpuPercent: 0 };
           const ramBarWidth = g.isOnline ? Math.min(100, Math.max(8, m.memPercent)) : 0;
 
-          // Power Button with loading state
           let powerBtn = '';
           if (pendingTransitions[g.name]) {
             powerBtn = `<button disabled class="text-[11px] px-2.5 py-1 bg-slate-100 text-slate-400 border border-slate-200 rounded-lg cursor-not-allowed">⏳ Memproses...</button>`;
@@ -574,11 +1323,13 @@
         const res = await fetch('/api/admin/reset-group', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin, groupId })
+          body: JSON.stringify({ groupId })
         });
         const data = await res.json();
-        alert(data.message || (data.success ? 'Berhasil di-reset.' : 'Gagal reset.'));
+        showToast('Kelompok Di-reset', data.message || (data.success ? 'Berhasil di-reset.' : 'Gagal reset.'), false);
+        hideToast();
         loadGroups();
+        if (currentView === 'groups') loadAdminGroupsGrid();
       } catch (err) {
         alert('Gagal menghubungi server: ' + err.message);
       }
@@ -604,12 +1355,15 @@
       window.location.href = '/admin-login.html';
     }
 
+    // Startup Initializer
     checkAdminAuth();
     checkSession();
     updateMetrics();
     setInterval(updateMetrics, 2000);
     loadGroups();
-    setInterval(loadGroups, 8000);
+    setInterval(() => {
+      if (currentView === 'monitoring') loadGroups();
+    }, 8000);
   </script>
 </body>
 </html>

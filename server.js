@@ -606,24 +606,37 @@ app.post('/api/admin/logout', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const { nis, password } = req.body;
   const db = readDB();
-  const student = db.students.find(s => s.nis === String(nis).trim());
+  const cleanNis = String(nis || '').trim();
+  const student = (db.students || []).find(s => String(s.nis).trim() === cleanNis);
   
   if (!student) {
-    return res.status(401).json({ success: false, message: 'NIS tidak terdaftar dalam sistem!' });
+    return res.status(401).json({ 
+      success: false, 
+      message: 'NIS tidak terdaftar dalam sistem! Pastikan NIS Anda sudah didaftarkan oleh guru di Panel Kelola Data Siswa.' 
+    });
   }
   
   if (student.password !== password) {
     return res.status(401).json({ success: false, message: 'Password salah!' });
   }
 
-  const group = student.groupId ? db.groups.find(g => g.id === student.groupId) : null;
+  // Cek kesesuaian sesi kelas jika aktif
+  if (db.activeSession && student.class && student.class !== db.activeSession) {
+    return res.status(403).json({
+      success: false,
+      message: `Saat ini sesi kelas yang aktif adalah ${db.activeSession}. Akun Anda terdaftar di ${student.class}. Silakan tunggu jadwal sesi kelas Anda atau hubungi guru.`
+    });
+  }
+
+  const group = student.groupId ? (db.groups || []).find(g => g.id === student.groupId) : null;
 
   return res.json({
     success: true,
     student: {
       nis: student.nis,
       name: student.name,
-      isPaired: student.isPaired,
+      class: student.class || 'XI-TKJ-1',
+      isPaired: !!student.isPaired,
       groupId: student.groupId,
       group: group ? { id: group.id, name: group.name, ip: group.ip } : null
     }
@@ -633,16 +646,24 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/students/unpaired', (req, res) => {
   const { currentNis } = req.query;
   const db = readDB();
-  const unpaired = db.students
-    .filter(s => !s.isPaired && s.nis !== currentNis)
-    .map(s => ({ nis: s.nis, name: s.name }));
+  const currentStudent = (db.students || []).find(s => String(s.nis).trim() === String(currentNis).trim());
+  const targetClass = currentStudent ? currentStudent.class : null;
+
+  const unpaired = (db.students || [])
+    .filter(s => {
+      if (s.isPaired || String(s.nis).trim() === String(currentNis).trim()) return false;
+      if (targetClass && s.class && s.class !== targetClass) return false;
+      return true;
+    })
+    .map(s => ({ nis: s.nis, name: s.name, class: s.class }));
   res.json({ success: true, unpaired });
 });
 
 app.get('/api/groups/available', (req, res) => {
   const db = readDB();
-  const available = db.groups
-    .filter(g => g.members.length === 0)
+  // Pastikan HANYA kelompok yang benar-benar kosong (members 0) yang ditampilkan
+  const available = (db.groups || [])
+    .filter(g => !g.members || !Array.isArray(g.members) || g.members.length === 0)
     .map(g => ({ id: g.id, name: g.name, ip: g.ip }));
   res.json({ success: true, available });
 });
@@ -651,11 +672,11 @@ app.post('/api/group/pair', (req, res) => {
   const { studentNis1, partnerNis, targetGroupId } = req.body;
   const db = readDB();
 
-  const s1 = db.students.find(s => s.nis === studentNis1);
-  const s2 = db.students.find(s => s.nis === partnerNis);
+  const s1 = (db.students || []).find(s => String(s.nis).trim() === String(studentNis1).trim());
+  const s2 = (db.students || []).find(s => String(s.nis).trim() === String(partnerNis).trim());
 
   if (!s1 || !s2) {
-    return res.status(400).json({ success: false, message: 'Data siswa atau partner tidak valid!' });
+    return res.status(400).json({ success: false, message: 'Data siswa atau rekan yang dipilih tidak valid!' });
   }
 
   if (s1.isPaired) {
@@ -668,9 +689,18 @@ app.post('/api/group/pair', (req, res) => {
 
   let group = null;
   if (targetGroupId) {
-    group = db.groups.find(g => g.id === parseInt(targetGroupId));
+    group = (db.groups || []).find(g => g.id === parseInt(targetGroupId));
+    if (!group) {
+      return res.status(400).json({ success: false, message: 'Server kelompok yang dipilih tidak ditemukan!' });
+    }
+    if (group.members && Array.isArray(group.members) && group.members.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Server ${group.name} sudah digunakan oleh kelompok lain! Silakan pilih server lain yang masih kosong.` 
+      });
+    }
   } else {
-    group = db.groups.find(g => g.members.length === 0);
+    group = (db.groups || []).find(g => !g.members || !Array.isArray(g.members) || g.members.length === 0);
   }
 
   if (!group) {
@@ -690,6 +720,241 @@ app.post('/api/group/pair', (req, res) => {
     message: `Berhasil dipasangkan ke ${group.name}!`,
     group: { id: group.id, name: group.name, ip: group.ip }
   });
+});
+
+// ---------------------------------------------------------------------
+// 3.1. ADMIN STUDENT & GROUP MANAGEMENT
+// ---------------------------------------------------------------------
+app.get('/api/admin/students', requireAdminAuth, (req, res) => {
+  const db = readDB();
+  const students = (db.students || []).map(s => {
+    const group = s.groupId ? (db.groups || []).find(g => g.id === s.groupId) : null;
+    return {
+      nis: s.nis,
+      name: s.name,
+      class: s.class || 'XI-TKJ-1',
+      password: s.password || 'smktelkom',
+      isPaired: !!s.isPaired,
+      groupId: s.groupId || null,
+      groupName: group ? group.name : null,
+      groupIp: group ? group.ip : null
+    };
+  });
+  res.json({ success: true, students, total: students.length });
+});
+
+app.post('/api/admin/students', requireAdminAuth, (req, res) => {
+  const { nis, name, class: className, password } = req.body;
+  const cleanNis = String(nis || '').trim();
+  const cleanName = String(name || '').trim();
+  const cleanClass = String(className || 'XI-TKJ-1').trim();
+  const cleanPass = String(password || 'smktelkom').trim();
+
+  if (!cleanNis || !cleanName) {
+    return res.status(400).json({ success: false, message: 'NIS dan Nama Siswa wajib diisi!' });
+  }
+
+  const db = readDB();
+  if (!db.students) db.students = [];
+
+  const existing = db.students.find(s => String(s.nis).trim() === cleanNis);
+  if (existing) {
+    return res.status(400).json({ success: false, message: `Siswa dengan NIS ${cleanNis} sudah terdaftar (${existing.name})!` });
+  }
+
+  const newStudent = {
+    nis: cleanNis,
+    name: cleanName,
+    class: cleanClass,
+    password: cleanPass || 'smktelkom',
+    groupId: null,
+    isPaired: false
+  };
+
+  db.students.push(newStudent);
+  writeDB(db);
+
+  res.json({ 
+    success: true, 
+    message: `Siswa ${cleanName} (NIS: ${cleanNis}) berhasil didaftarkan!`, 
+    student: newStudent 
+  });
+});
+
+app.post('/api/admin/students/batch', requireAdminAuth, (req, res) => {
+  const { students } = req.body;
+  if (!Array.isArray(students) || students.length === 0) {
+    return res.status(400).json({ success: false, message: 'Data siswa batch tidak valid atau kosong!' });
+  }
+
+  const db = readDB();
+  if (!db.students) db.students = [];
+
+  let addedCount = 0;
+  let updatedCount = 0;
+
+  students.forEach(st => {
+    const cleanNis = String(st.nis || '').trim();
+    const cleanName = String(st.name || '').trim();
+    const cleanClass = String(st.class || 'XI-TKJ-1').trim();
+    const cleanPass = String(st.password || 'smktelkom').trim();
+
+    if (!cleanNis || !cleanName) return;
+
+    const existingIdx = db.students.findIndex(s => String(s.nis).trim() === cleanNis);
+    if (existingIdx !== -1) {
+      db.students[existingIdx].name = cleanName;
+      db.students[existingIdx].class = cleanClass;
+      if (cleanPass) db.students[existingIdx].password = cleanPass;
+      updatedCount++;
+    } else {
+      db.students.push({
+        nis: cleanNis,
+        name: cleanName,
+        class: cleanClass,
+        password: cleanPass || 'smktelkom',
+        groupId: null,
+        isPaired: false
+      });
+      addedCount++;
+    }
+  });
+
+  writeDB(db);
+  res.json({ 
+    success: true, 
+    message: `Berhasil memproses data siswa: ${addedCount} siswa baru ditambahkan, ${updatedCount} siswa diperbarui.`,
+    totalStudents: db.students.length 
+  });
+});
+
+app.put('/api/admin/students/:nis', requireAdminAuth, (req, res) => {
+  const targetNis = String(req.params.nis).trim();
+  const { name, class: className, password } = req.body;
+  const db = readDB();
+
+  const student = (db.students || []).find(s => String(s.nis).trim() === targetNis);
+  if (!student) {
+    return res.status(404).json({ success: false, message: 'Siswa dengan NIS tersebut tidak ditemukan!' });
+  }
+
+  if (name) student.name = String(name).trim();
+  if (className) student.class = String(className).trim();
+  if (password) student.password = String(password).trim();
+
+  writeDB(db);
+  res.json({ success: true, message: `Data siswa ${student.name} berhasil diperbarui!` });
+});
+
+app.delete('/api/admin/students/:nis', requireAdminAuth, (req, res) => {
+  const targetNis = String(req.params.nis).trim();
+  const db = readDB();
+
+  const studentIdx = (db.students || []).findIndex(s => String(s.nis).trim() === targetNis);
+  if (studentIdx === -1) {
+    return res.status(404).json({ success: false, message: 'Siswa tidak ditemukan!' });
+  }
+
+  const student = db.students[studentIdx];
+  // Bersihkan dari kelompok jika terpasang
+  if (student.groupId && db.groups) {
+    const group = db.groups.find(g => g.id === student.groupId);
+    if (group && group.members) {
+      group.members = group.members.filter(nis => String(nis).trim() !== targetNis);
+    }
+  }
+
+  db.students.splice(studentIdx, 1);
+  writeDB(db);
+
+  res.json({ success: true, message: `Siswa ${student.name} (NIS: ${targetNis}) berhasil dihapus dari sistem.` });
+});
+
+app.post('/api/admin/students/:nis/unpair', requireAdminAuth, (req, res) => {
+  const targetNis = String(req.params.nis).trim();
+  const db = readDB();
+
+  const student = (db.students || []).find(s => String(s.nis).trim() === targetNis);
+  if (!student) {
+    return res.status(404).json({ success: false, message: 'Siswa tidak ditemukan!' });
+  }
+
+  if (student.groupId && db.groups) {
+    const group = db.groups.find(g => g.id === student.groupId);
+    if (group && group.members) {
+      group.members = group.members.filter(nis => String(nis).trim() !== targetNis);
+    }
+  }
+
+  student.groupId = null;
+  student.isPaired = false;
+
+  writeDB(db);
+  res.json({ success: true, message: `Siswa ${student.name} berhasil dilepas dari kelompok VM.` });
+});
+
+app.post('/api/admin/students/clear-dummy', requireAdminAuth, (req, res) => {
+  const db = readDB();
+  const initialCount = (db.students || []).length;
+  // Siswa dummy contoh adalah NIS 2401xx atau 2402xx yang mengandung nama 'Siswa TKJ'
+  db.students = (db.students || []).filter(s => {
+    const name = String(s.name || '');
+    const nis = String(s.nis || '');
+    const isDummy = name.toLowerCase().includes('siswa tkj') || 
+                    (nis.startsWith('2401') && parseInt(nis) <= 240130) || 
+                    (nis.startsWith('2402') && parseInt(nis) <= 240230);
+    return !isDummy;
+  });
+
+  // Bersihkan anggota kelompok jika ada dummy yang terpasang
+  (db.groups || []).forEach(g => {
+    if (g.members) {
+      g.members = g.members.filter(nis => (db.students || []).some(s => s.nis === nis));
+    }
+  });
+
+  writeDB(db);
+  const removed = initialCount - db.students.length;
+  res.json({ 
+    success: true, 
+    message: `Berhasil menghapus ${removed} akun siswa contoh / dummy!`, 
+    remaining: db.students.length 
+  });
+});
+
+app.post('/api/admin/students/reset-pairings', requireAdminAuth, (req, res) => {
+  const db = readDB();
+  (db.students || []).forEach(s => {
+    s.groupId = null;
+    s.isPaired = false;
+  });
+  (db.groups || []).forEach(g => {
+    g.members = [];
+  });
+  writeDB(db);
+  res.json({ success: true, message: 'Semua pasangan siswa dan alokasi server VM berhasil di-reset menjadi kosong!' });
+});
+
+app.get('/api/admin/groups', requireAdminAuth, (req, res) => {
+  const db = readDB();
+  const groups = (db.groups || []).map(g => {
+    const memberDetails = (g.members || []).map(nis => {
+      const st = (db.students || []).find(s => s.nis === nis);
+      return {
+        nis,
+        name: st ? st.name : 'Siswa ' + nis,
+        class: st ? st.class : '-'
+      };
+    });
+    return {
+      id: g.id,
+      name: g.name,
+      ip: g.ip,
+      members: memberDetails,
+      isOccupied: memberDetails.length > 0
+    };
+  });
+  res.json({ success: true, groups });
 });
 
 app.get('/api/groups/status', async (req, res) => {
