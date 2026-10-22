@@ -935,6 +935,111 @@ app.post('/api/admin/students/reset-pairings', requireAdminAuth, (req, res) => {
   res.json({ success: true, message: 'Semua pasangan siswa dan alokasi server VM berhasil di-reset menjadi kosong!' });
 });
 
+
+// ---------------------------------------------------------------------
+// 3.1.5. ASSIGN / ADD MEMBER TO GROUP (ALLOW 3+ STUDENTS PER GROUP VIA ADMIN)
+// ---------------------------------------------------------------------
+app.post('/api/admin/groups/:id/add-member', requireAdminAuth, (req, res) => {
+  const groupId = parseInt(req.params.id);
+  const { nis } = req.body;
+  if (!nis) {
+    return res.status(400).json({ success: false, message: 'NIS siswa wajib dipilih!' });
+  }
+
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === groupId);
+  if (!group) {
+    return res.status(404).json({ success: false, message: 'Kelompok server VM tidak ditemukan!' });
+  }
+
+  const cleanNis = String(nis).trim();
+  const student = (db.students || []).find(s => String(s.nis).trim() === cleanNis);
+  if (!student) {
+    return res.status(404).json({ success: false, message: 'Data siswa tidak ditemukan!' });
+  }
+
+  if (!group.members) group.members = [];
+
+  if (group.members.includes(cleanNis)) {
+    return res.status(400).json({ success: false, message: `Siswa ${student.name} sudah berada di dalam ${group.name}!` });
+  }
+
+  // If student was in another group, unpair from previous group
+  if (student.groupId && student.groupId !== groupId) {
+    const prevGroup = (db.groups || []).find(g => g.id === student.groupId);
+    if (prevGroup && prevGroup.members) {
+      prevGroup.members = prevGroup.members.filter(m => String(m).trim() !== cleanNis);
+    }
+  }
+
+  group.members.push(cleanNis);
+  student.groupId = group.id;
+  student.isPaired = true;
+
+  if (!db.classGroups) db.classGroups = {};
+  db.classGroups[db.activeSession || 'XI-TKJ-1'] = db.groups;
+
+  writeDB(db);
+
+  const roleName = group.members.length === 3 ? 'Anggota ke-3 (Co-Pilot)' : `Anggota ke-${group.members.length}`;
+  res.json({
+    success: true,
+    message: `Berhasil menambahkan ${student.name} sebagai ${roleName} di ${group.name}!`,
+    membersCount: group.members.length,
+    group: { id: group.id, name: group.name, ip: group.ip }
+  });
+});
+
+app.post('/api/admin/students/:nis/assign-group', requireAdminAuth, (req, res) => {
+  const cleanNis = String(req.params.nis).trim();
+  const { groupId } = req.body;
+  if (!groupId) {
+    return res.status(400).json({ success: false, message: 'Server kelompok wajib dipilih!' });
+  }
+
+  const targetGroupId = parseInt(groupId);
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === targetGroupId);
+  if (!group) {
+    return res.status(404).json({ success: false, message: 'Kelompok server VM tidak ditemukan!' });
+  }
+
+  const student = (db.students || []).find(s => String(s.nis).trim() === cleanNis);
+  if (!student) {
+    return res.status(404).json({ success: false, message: 'Data siswa tidak ditemukan!' });
+  }
+
+  if (!group.members) group.members = [];
+
+  if (group.members.includes(cleanNis)) {
+    return res.status(400).json({ success: false, message: `Siswa ${student.name} sudah berada di dalam ${group.name}!` });
+  }
+
+  if (student.groupId && student.groupId !== targetGroupId) {
+    const prevGroup = (db.groups || []).find(g => g.id === student.groupId);
+    if (prevGroup && prevGroup.members) {
+      prevGroup.members = prevGroup.members.filter(m => String(m).trim() !== cleanNis);
+    }
+  }
+
+  group.members.push(cleanNis);
+  student.groupId = group.id;
+  student.isPaired = true;
+
+  if (!db.classGroups) db.classGroups = {};
+  db.classGroups[db.activeSession || 'XI-TKJ-1'] = db.groups;
+
+  writeDB(db);
+
+  const roleName = group.members.length === 3 ? 'Anggota ke-3 (Co-Pilot)' : `Anggota ke-${group.members.length}`;
+  res.json({
+    success: true,
+    message: `Berhasil menugaskan ${student.name} ke ${group.name} (${roleName})!`,
+    membersCount: group.members.length,
+    group: { id: group.id, name: group.name, ip: group.ip }
+  });
+});
+
 app.get('/api/admin/groups', requireAdminAuth, (req, res) => {
   const db = readDB();
   const groups = (db.groups || []).map(g => {

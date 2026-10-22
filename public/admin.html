@@ -421,8 +421,11 @@
       
       <div class="cyber-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div>
-          <h2 class="font-bold text-sm text-slate-800">Alokasi 15 Server VM Kelompok Siswa</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Setiap VM dikelola oleh 2 siswa (Driver &amp; Navigator). Anda dapat mereset kelompok jika diperlukan.</p>
+          <h2 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <span>🖥️</span>
+            <span>Alokasi 15 Server VM Kelompok Siswa</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Setiap VM standarnya dikelola 2 siswa (Driver &amp; Navigator). Untuk kelas berkapasitas &gt; 30 siswa, Anda dapat menambahkan anggota ke-3 (Co-Pilot) langsung ke VM tertentu.</p>
         </div>
         <button onclick="loadAdminGroupsGrid()" class="text-xs px-3.5 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition flex items-center gap-1.5 font-mono shadow-sm">
           <span>🔄</span>
@@ -664,6 +667,102 @@
           <button type="button" onclick="closeModal('modalUploadGuide')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
           <button type="submit" id="btnSubmitUploadGuide" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition shadow-sm shadow-amber-500/20 flex items-center gap-2">
             <span>Upload &amp; Publikasikan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+    <!-- =================================================================== -->
+  <!-- MODAL 5: TAMBAH ANGGOTA KE KELOMPOK (ORANG KE-3 / EKSTRA) -->
+  <!-- =================================================================== -->
+  <div id="modalAddMemberToGroup" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>👥</span> Tambah Anggota ke Server VM
+        </h3>
+        <button onclick="closeModal('modalAddMemberToGroup')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
+        <div class="flex items-center justify-between font-mono">
+          <span class="text-slate-500">Target Server:</span>
+          <strong id="modalTargetGroupName" class="text-indigo-600 font-bold">TKJ-Kelompok-01</strong>
+        </div>
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span class="text-slate-400">IP Host:</span>
+          <span id="modalTargetGroupIp" class="text-cyan-700 font-bold">10.219.30.84</span>
+        </div>
+        <div id="modalTargetGroupCurrentMembers" class="pt-1.5 text-[11px] text-slate-600 border-t border-slate-200/60">
+          Anggota saat ini: -
+        </div>
+      </div>
+
+      <form onsubmit="handleAssignMemberToGroupSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="modalTargetGroupId" value="">
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Pilih Siswa yang akan Ditugaskan <span class="text-rose-500">*</span></label>
+          <select id="modalSelectStudentToAssign" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono text-xs">
+            <option value="">-- Memuat daftar siswa... --</option>
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">
+            *Daftar menampilkan siswa sesi <span class="font-bold text-slate-600" id="modalSessionBadge">XI-TKJ-1</span> yang belum memiliki kelompok.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalAddMemberToGroup')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+          <button type="submit" id="btnSubmitAddMember" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow-sm shadow-indigo-600/20 flex items-center gap-1.5">
+            <span>➕ Tugaskan ke Kelompok</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 6: TUGASKAN SISWA KE VM TERTENTU (DARI TABEL SISWA) -->
+  <!-- =================================================================== -->
+  <div id="modalAssignStudentDirectly" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 font-mono flex items-center gap-2">
+          <span>📌</span> Tugaskan Siswa ke Server VM
+        </h3>
+        <button onclick="closeModal('modalAssignStudentDirectly')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
+        <div class="flex items-center justify-between font-mono">
+          <span class="text-slate-500">Nama Siswa:</span>
+          <strong id="modalDirectStudentName" class="text-slate-800 font-bold">Budi Santoso</strong>
+        </div>
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span class="text-slate-400">NIS &amp; Kelas:</span>
+          <span id="modalDirectStudentNis" class="text-cyan-700 font-bold">240101 (XI-TKJ-1)</span>
+        </div>
+      </div>
+
+      <form onsubmit="handleDirectStudentAssignSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="modalDirectStudentNisInput" value="">
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Pilih Server Kelompok (1 - 15) <span class="text-rose-500">*</span></label>
+          <select id="modalDirectSelectGroup" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 font-mono text-xs">
+            <option value="">-- Memuat kelompok... --</option>
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">
+            *Kelompok yang sudah memiliki 2 siswa dapat dipilih untuk menambahkan anggota ke-3.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalAssignStudentDirectly')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">Batal</button>
+          <button type="submit" id="btnSubmitDirectAssign" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition shadow-sm shadow-cyan-600/20 flex items-center gap-1.5">
+            <span>Simpan Penugasan</span>
           </button>
         </div>
       </form>
@@ -1122,6 +1221,8 @@
     // ===================================================================
     // VIEW 3: STATUS 15 KELOMPOK GRID
     // ===================================================================
+    let currentAdminGroups = [];
+
     async function loadAdminGroupsGrid() {
       const container = document.getElementById('groupsGridContainer');
       container.innerHTML = '<div class="col-span-full p-6 text-center text-slate-400">Memuat status kelompok...</div>';
@@ -1131,30 +1232,63 @@
         const data = await res.json();
         if (!data.success) return;
 
+        currentAdminGroups = data.groups || [];
         container.innerHTML = '';
         data.groups.forEach(g => {
           const card = document.createElement('div');
           card.className = 'cyber-card rounded-2xl p-4 flex flex-col justify-between space-y-3';
 
           const isOccupied = g.members && g.members.length > 0;
-          const statusBadge = isOccupied
-            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">TERISI (2 SISWA)</span>'
-            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">KOSONG / TERSEDIA</span>';
+          const memberCount = g.members ? g.members.length : 0;
+          let statusBadge = '';
+          if (memberCount === 0) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">KOSONG / TERSEDIA</span>';
+          } else if (memberCount === 1) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">TERISI (1 SISWA)</span>';
+          } else if (memberCount === 2) {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">TERISI (2 SISWA)</span>';
+          } else {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">TERISI (${memberCount} SISWA - ANGGOTA 3)</span>`;
+          }
 
           let membersHtml = '';
           if (isOccupied) {
-            membersHtml = g.members.map((m, idx) => `
-              <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                <span class="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-[10px]">${idx === 0 ? 'D' : 'N'}</span>
-                <div class="truncate">
-                  <div class="font-semibold text-slate-800 truncate">${m.name}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">NIS: ${m.nis} (${m.class || '-'})</div>
+            membersHtml = g.members.map((m, idx) => {
+              let roleLabel = 'D';
+              let roleBg = 'bg-indigo-50 border-indigo-200 text-indigo-700';
+              let roleTitle = 'Driver (Siswa 1)';
+              if (idx === 1) {
+                roleLabel = 'N';
+                roleBg = 'bg-cyan-50 border-cyan-200 text-cyan-700';
+                roleTitle = 'Navigator (Siswa 2)';
+              } else if (idx >= 2) {
+                roleLabel = 'C';
+                roleBg = 'bg-purple-50 border-purple-200 text-purple-700';
+                roleTitle = `Co-Pilot / Anggota ${idx + 1} (Ditambahkan Guru)`;
+              }
+
+              return `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                  <div class="flex items-center gap-2 truncate">
+                    <span class="w-5 h-5 rounded-md ${roleBg} border flex items-center justify-center font-bold text-[10px]" title="${roleTitle}">${roleLabel}</span>
+                    <div class="truncate">
+                      <div class="font-semibold text-slate-800 truncate">${escapeHtml(m.name)}</div>
+                      <div class="text-[10px] text-slate-400 font-mono">NIS: ${escapeHtml(m.nis)} (${escapeHtml(m.class || '-')})</div>
+                    </div>
+                  </div>
+                  <button onclick="unpairStudentFromGroup('${m.nis}', '${escapeHtml(m.name).replace(/'/g, "\\'")}')" class="text-[10px] text-slate-400 hover:text-rose-600 px-1.5 py-0.5 rounded hover:bg-rose-50 transition font-bold" title="Keluarkan siswa ini dari kelompok">✕</button>
                 </div>
-              </div>
-            `).join('');
+              `;
+            }).join('');
           } else {
             membersHtml = `<div class="p-4 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">VM Kosong — Belum ada siswa berpasangan</div>`;
           }
+
+          const addMemberBtn = `
+            <button onclick="openAddMemberToGroupModal(${g.id}, '${g.name}', '${g.ip}')" class="w-full mt-2 py-1.5 px-3 border border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50 text-indigo-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              <span>➕ Tambah Anggota (Orang ke-3)</span>
+            </button>
+          `;
 
           card.innerHTML = `
             <div>
@@ -1168,6 +1302,7 @@
               <div class="mt-3 space-y-1.5">
                 ${membersHtml}
               </div>
+              ${addMemberBtn}
             </div>
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
               <span class="text-[10px] font-mono text-slate-400">ID VM: #${g.id}</span>
@@ -1505,7 +1640,171 @@
     }, 8000);
   
     // =========================================================================
-        function escapeHtml(str) {
+        
+    // =========================================================================
+    // GROUP MEMBER ASSIGNMENT HANDLERS (ALLOW 3+ STUDENTS PER GROUP VIA ADMIN)
+    // =========================================================================
+    function openAddMemberToGroupModal(groupId, groupName, groupIp) {
+      document.getElementById('modalTargetGroupId').value = groupId;
+      document.getElementById('modalTargetGroupName').textContent = groupName;
+      document.getElementById('modalTargetGroupIp').textContent = groupIp;
+      document.getElementById('modalSessionBadge').textContent = currentSession;
+
+      const group = currentAdminGroups.find(g => g.id === groupId);
+      const membersText = group && group.members && group.members.length > 0
+        ? group.members.map((m, i) => `${i === 0 ? 'D: ' : (i === 1 ? 'N: ' : 'C: ')}${m.name} (${m.nis})`).join(' • ')
+        : 'Belum ada anggota (VM Kosong)';
+      document.getElementById('modalTargetGroupCurrentMembers').textContent = 'Anggota saat ini: ' + membersText;
+
+      const select = document.getElementById('modalSelectStudentToAssign');
+      select.innerHTML = '';
+
+      // Prioritas siswa dari sesi kelas aktif yang belum memiliki kelompok
+      let candidates = allStudentsData.filter(s => s.class === currentSession && !s.isPaired);
+      if (candidates.length === 0) {
+        // Fallback jika tidak ada di sesi ini, cari semua siswa yang belum paired
+        candidates = allStudentsData.filter(s => !s.isPaired);
+      }
+
+      if (candidates.length === 0) {
+        select.innerHTML = '<option value="" disabled selected>Semua siswa di kelas ini sudah memiliki kelompok!</option>';
+      } else {
+        select.innerHTML = '<option value="">-- Pilih Siswa yang akan Ditugaskan --</option>' + 
+          candidates.map(s => `<option value="${s.nis}">${escapeHtml(s.name)} (NIS: ${s.nis} - Kelas: ${s.class})</option>`).join('');
+      }
+
+      openModal('modalAddMemberToGroup');
+    }
+
+    async function handleAssignMemberToGroupSubmit(e) {
+      e.preventDefault();
+      const groupId = document.getElementById('modalTargetGroupId').value;
+      const nis = document.getElementById('modalSelectStudentToAssign').value;
+      if (!groupId || !nis) {
+        alert('Silakan pilih siswa yang akan ditugaskan!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitAddMember');
+      const oldHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>Menyimpan...</span>';
+
+      try {
+        const res = await fetch(`/api/admin/groups/${groupId}/add-member`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nis })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('modalAddMemberToGroup');
+          showToast('Anggota Ditambahkan', data.message, false);
+          hideToast();
+          loadAdminGroupsGrid();
+          loadStudents();
+          loadGroups();
+        } else {
+          alert('Gagal: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+      }
+    }
+
+    async function unpairStudentFromGroup(nis, name) {
+      if (!confirm(`Keluarkan siswa [${name}] (NIS: ${nis}) dari kelompok VM ini?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/students/${encodeURIComponent(nis)}/unpair`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        showToast('Anggota Dikeluarkan', data.message, false);
+        hideToast();
+        loadAdminGroupsGrid();
+        loadStudents();
+        loadGroups();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function openAssignStudentDirectlyModal(nis, name, className) {
+      document.getElementById('modalDirectStudentNisInput').value = nis;
+      document.getElementById('modalDirectStudentName').textContent = name;
+      document.getElementById('modalDirectStudentNis').textContent = `${nis} (${className})`;
+
+      const select = document.getElementById('modalDirectSelectGroup');
+      select.innerHTML = '<option value="">-- Pilih Server Kelompok --</option>';
+
+      // Pastikan load groups jika kosong
+      const groupsList = (currentAdminGroups && currentAdminGroups.length > 0) ? currentAdminGroups : [];
+      if (groupsList.length === 0) {
+        select.innerHTML = '<option value="" disabled>Memuat kelompok, silakan coba beberapa detik lagi...</option>';
+        fetch('/api/admin/groups').then(r => r.json()).then(d => {
+          if (d.success) {
+            currentAdminGroups = d.groups;
+            openAssignStudentDirectlyModal(nis, name, className);
+          }
+        });
+        return;
+      }
+
+      groupsList.forEach(g => {
+        const count = g.members ? g.members.length : 0;
+        let desc = count === 0 ? 'Kosong' : `${count} Siswa`;
+        if (count === 2) desc += ' (Akan menjadi Anggota ke-3)';
+        else if (count >= 3) desc += ' (Anggota Ekstra)';
+        select.innerHTML += `<option value="${g.id}">${g.name} (${g.ip}) — [${desc}]</option>`;
+      });
+
+      openModal('modalAssignStudentDirectly');
+    }
+
+    async function handleDirectStudentAssignSubmit(e) {
+      e.preventDefault();
+      const nis = document.getElementById('modalDirectStudentNisInput').value;
+      const groupId = document.getElementById('modalDirectSelectGroup').value;
+      if (!nis || !groupId) {
+        alert('Silakan pilih server kelompok tujuan!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitDirectAssign');
+      const oldHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>Menyimpan...</span>';
+
+      try {
+        const res = await fetch(`/api/admin/groups/${groupId}/add-member`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nis })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('modalAssignStudentDirectly');
+          showToast('Penugasan Berhasil', data.message, false);
+          hideToast();
+          loadStudents();
+          loadAdminGroupsGrid();
+          loadGroups();
+        } else {
+          alert('Gagal: ' + data.message);
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+      }
+    }
+
+    function escapeHtml(str) {
       if (str === null || str === undefined) return '';
       return String(str)
         .replace(/&/g, '&amp;')
