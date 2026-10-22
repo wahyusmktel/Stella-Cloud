@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Administrator - Stella Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b1120;
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(14, 165, 233, 0.12) 0px, transparent 50%),
+        radial-gradient(at 85% 85%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        linear-gradient(to right, rgba(51, 65, 85, 0.2) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(14, 165, 233, 0.1);
+    }
+    .input-glow:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(0.99); }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 text-slate-100">
+
+  <div class="w-full max-w-md">
+
+    <!-- Brand Header -->
+    <div class="text-center mb-8 space-y-2">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 shadow-lg shadow-cyan-500/25 text-white mb-2 animate-pulse-subtle">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+        Stella <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">Cloud</span>
+      </h1>
+      <p class="text-xs text-slate-400 font-mono tracking-wide uppercase">Teacher &amp; Lab Administrator Portal</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="glass-card rounded-2xl p-6 sm:p-8 space-y-6">
+
+      <!-- Security Badge -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 text-xs">
+        <div class="flex items-center gap-2 text-cyan-400 font-mono">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span>AUTENTIKASI AMAN</span>
+        </div>
+        <div id="attemptBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+          Kesempatan: <span id="remainingAttempts" class="text-emerald-400">3/3</span>
+        </div>
+      </div>
+
+      <!-- Alert Notification -->
+      <div id="alertBox" class="hidden rounded-xl p-3 text-xs flex items-start gap-3 border transition-all duration-300">
+        <span id="alertIcon" class="text-base leading-none">⚠️</span>
+        <div id="alertMsg" class="font-medium flex-1"></div>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        
+        <!-- Username -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-300 tracking-wide font-mono">
+            USERNAME ADMIN
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </span>
+            <input 
+              type="text" 
+              id="username" 
+              required 
+              autocomplete="username"
+              placeholder="Masukkan username admin"
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 input-glow transition font-mono outline-none"
+            >
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-300 tracking-wide font-mono">
+            PASSWORD
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </span>
+            <input 
+              type="password" 
+              id="password" 
+              required 
+              autocomplete="current-password"
+              placeholder="Masukkan password admin"
+              class="w-full pl-9 pr-10 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 input-glow transition font-mono outline-none"
+            >
+            <button 
+              type="button" 
+              onclick="togglePassword()"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition"
+              title="Tampilkan / Sembunyikan Password"
+            >
+              <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- CAPTCHA Section -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-300 tracking-wide font-mono">
+              KODE KEAMANAN (CAPTCHA)
+            </label>
+            <button 
+              type="button" 
+              onclick="refreshCaptcha()" 
+              class="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition"
+              title="Ganti Kode Gambar"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              <span>Muat Ulang</span>
+            </button>
+          </div>
+
+          <!-- Captcha Image Container -->
+          <div class="flex items-center gap-3">
+            <div id="captchaContainer" class="flex-shrink-0 bg-slate-950 p-1.5 rounded-xl border border-slate-700 flex items-center justify-center min-w-[160px] min-h-[50px]">
+              <span class="text-xs text-slate-500 font-mono animate-pulse">Memuat CAPTCHA...</span>
+            </div>
+            <input 
+              type="text" 
+              id="captchaInput" 
+              required 
+              maxlength="6"
+              autocomplete="off"
+              placeholder="Ketik kode"
+              class="flex-1 px-3 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-center text-lg tracking-widest text-white uppercase placeholder-slate-600 font-mono font-bold input-glow transition outline-none"
+            >
+          </div>
+          <p class="text-[10px] text-slate-400 font-mono">
+            *Maksimal 3 kali kesempatan input sebelum sistem dikunci sementara.
+          </p>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="submitBtn"
+          class="w-full mt-4 py-3 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 shadow-lg shadow-cyan-500/25 transition transform active:scale-[0.98] flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+          </svg>
+          <span id="btnText">Masuk ke Panel Monitoring</span>
+        </button>
+      </form>
+
+      <!-- Footer Info -->
+      <div class="text-center pt-2 text-[11px] text-slate-400 font-mono flex items-center justify-center gap-2">
+        <span>🛡️ Proteksi Brute-Force Aktif</span>
+        <span>•</span>
+        <a href="/" class="text-cyan-400 hover:underline">Halaman Siswa</a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    let currentCaptchaId = '';
+    let isLockedOut = false;
+    let lockoutTimer = null;
+
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alertBox');
+      const text = document.getElementById('alertMsg');
+      const icon = document.getElementById('alertIcon');
+
+      box.classList.remove('hidden', 'bg-rose-950/80', 'border-rose-500', 'text-rose-200', 'bg-amber-950/80', 'border-amber-500', 'text-amber-200', 'bg-emerald-950/80', 'border-emerald-500', 'text-emerald-200');
+
+      if (type === 'error') {
+        box.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-200');
+        icon.textContent = '❌';
+      } else if (type === 'warning') {
+        box.classList.add('bg-amber-950/80', 'border-amber-500', 'text-amber-200');
+        icon.textContent = '⏳';
+      } else {
+        box.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-200');
+        icon.textContent = '✅';
+      }
+
+      text.innerHTML = msg;
+    }
+
+    function togglePassword() {
+      const pass = document.getElementById('password');
+      if (pass.type === 'password') {
+        pass.type = 'text';
+      } else {
+        pass.type = 'password';
+      }
+    }
+
+    async function refreshCaptcha() {
+      if (isLockedOut) return;
+      try {
+        const res = await fetch('/api/admin/captcha');
+        const data = await res.json();
+
+        if (data.locked) {
+          handleLockout(data.remainingSeconds);
+          return;
+        }
+
+        currentCaptchaId = data.id;
+        document.getElementById('captchaContainer').innerHTML = data.svg;
+        document.getElementById('captchaInput').value = '';
+        
+        if (typeof data.remainingAttempts === 'number') {
+          updateAttemptBadge(data.remainingAttempts);
+        }
+      } catch (e) {
+        document.getElementById('captchaContainer').innerHTML = '<span class="text-rose-400 text-xs font-mono">Gagal memuat</span>';
+      }
+    }
+
+    function updateAttemptBadge(remaining) {
+      const el = document.getElementById('remainingAttempts');
+      el.textContent = `${remaining}/3`;
+      if (remaining === 3) {
+        el.className = 'text-emerald-400';
+      } else if (remaining === 2) {
+        el.className = 'text-amber-400';
+      } else {
+        el.className = 'text-rose-400 animate-pulse font-extrabold';
+      }
+    }
+
+    function handleLockout(seconds) {
+      isLockedOut = true;
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+      clearInterval(lockoutTimer);
+      let rem = seconds;
+
+      const updateLockoutText = () => {
+        const mins = Math.floor(rem / 60);
+        const secs = rem % 60;
+        const timeStr = `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+        showAlert(`<strong>SISTEM TERKUNCI!</strong> Telah salah 3 kali input CAPTCHA/kredensial. Silakan tunggu <strong>${timeStr}</strong> sebelum mencoba kembali.`, 'warning');
+      };
+
+      updateLockoutText();
+      lockoutTimer = setInterval(() => {
+        rem--;
+        if (rem <= 0) {
+          clearInterval(lockoutTimer);
+          isLockedOut = false;
+          document.getElementById('submitBtn').disabled = false;
+          document.getElementById('submitBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+          showAlert('Kunci waktu berakhir. Silakan muat ulang CAPTCHA dan coba lagi.', 'success');
+          refreshCaptcha();
+        } else {
+          updateLockoutText();
+        }
+      }, 1000);
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      if (isLockedOut) return;
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const captchaInput = document.getElementById('captchaInput').value.trim();
+
+      const btn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      btn.disabled = true;
+      btnText.textContent = 'Memverifikasi...';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            password,
+            captchaId: currentCaptchaId,
+            captchaInput
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.locked) {
+          handleLockout(data.remainingSeconds || 600);
+          return;
+        }
+
+        if (data.success) {
+          showAlert('Login berhasil! Mengalihkan ke panel guru...', 'success');
+          setTimeout(() => {
+            window.location.href = data.redirect || '/admin.html';
+          }, 800);
+        } else {
+          showAlert(data.message || 'Login gagal.');
+          if (typeof data.remainingAttempts === 'number') {
+            updateAttemptBadge(data.remainingAttempts);
+          }
+          refreshCaptcha();
+          document.getElementById('captchaInput').focus();
+        }
+      } catch (err) {
+        showAlert('Gagal menghubungi server: ' + err.message);
+        refreshCaptcha();
+      } finally {
+        if (!isLockedOut) {
+          btn.disabled = false;
+          btnText.textContent = 'Masuk ke Panel Monitoring';
+        }
+      }
+    }
+
+    // Auto load initial captcha
+    refreshCaptcha();
+  </script>
+</body>
+</html>

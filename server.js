@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const net = require('net');
 const os = require('os');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,8 +28,161 @@ server.on('connection', (sock) => {
 const PORT = 4000;
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
 
+// ---------------------------------------------------------------------
+// SECURITY & ADMIN AUTHENTICATION (Brute-Force & Captcha Protected)
+// ---------------------------------------------------------------------
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = '11081995';
+
+const adminSessions = new Map(); // token -> { createdAt, expiresAt }
+const captchaStore = new Map();  // id -> { text, createdAt }
+const ipLockoutStore = new Map(); // ip -> { failedAttempts, lockedUntil }
+
+const MAX_CAPTCHA_ATTEMPTS = 3;
+const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10 minutes lockout
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;   // 8 hours session
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.headers['cf-connecting-ip'] || 
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress || 
+         '127.0.0.1';
+}
+
+function getIpLockout(ip) {
+  let info = ipLockoutStore.get(ip);
+  if (!info) {
+    info = { failedAttempts: 0, lockedUntil: 0 };
+    ipLockoutStore.set(ip, info);
+  }
+  if (info.lockedUntil && Date.now() > info.lockedUntil) {
+    info.failedAttempts = 0;
+    info.lockedUntil = 0;
+  }
+  return info;
+}
+
+function generateCaptcha() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let text = '';
+  for (let i = 0; i < 5; i++) {
+    text += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  const width = 160;
+  const height = 50;
+
+  // Background noise lines
+  let lines = '';
+  const lineColors = ['#0284c7', '#6366f1', '#64748b', '#8b5cf6'];
+  for (let i = 0; i < 4; i++) {
+    const x1 = Math.floor(Math.random() * width);
+    const y1 = Math.floor(Math.random() * height);
+    const x2 = Math.floor(Math.random() * width);
+    const y2 = Math.floor(Math.random() * height);
+    lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${lineColors[i % 4]}" stroke-width="1.5" stroke-opacity="0.35" />`;
+  }
+
+  // Noise dots
+  let dots = '';
+  for (let i = 0; i < 25; i++) {
+    const cx = Math.floor(Math.random() * width);
+    const cy = Math.floor(Math.random() * height);
+    const r = (Math.random() * 1.5 + 0.5).toFixed(1);
+    dots += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#94a3b8" opacity="0.3" />`;
+  }
+
+  // Wavy text characters
+  let charElements = '';
+  const charColors = ['#0284c7', '#4338ca', '#0f766e', '#7c3aed', '#b45309'];
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const x = 20 + i * 26;
+    const y = 34 + (Math.random() * 6 - 3);
+    const rot = (Math.random() * 24 - 12).toFixed(1);
+    const color = charColors[i % charColors.length];
+    charElements += `<text x="${x}" y="${y}" font-family="'JetBrains Mono', monospace" font-size="26" font-weight="700" fill="${color}" transform="rotate(${rot}, ${x}, ${y})">${char}</text>`;
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="background:#f8fafc; border-radius:10px; border:1px solid #cbd5e1; user-select:none;">${lines}${dots}${charElements}</svg>`;
+  const id = crypto.randomBytes(16).toString('hex');
+
+  // Clean old captchas (> 5 mins)
+  const now = Date.now();
+  for (let [k, v] of captchaStore.entries()) {
+    if (now - v.createdAt > 5 * 60 * 1000) {
+      captchaStore.delete(k);
+    }
+  }
+
+  captchaStore.set(id, { text, createdAt: now });
+  return { id, svg };
+}
+
+function getAdminTokenFromReq(req) {
+  if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';');
+    for (let c of cookies) {
+      const parts = c.trim().split('=');
+      if (parts[0] === 'stella_admin_session') {
+        return decodeURIComponent(parts.slice(1).join('='));
+      }
+    }
+  }
+  const auth = req.headers['authorization'];
+  if (auth && auth.startsWith('Bearer ')) {
+    return auth.substring(7).trim();
+  }
+  return null;
+}
+
+function isValidAdminToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const session = adminSessions.get(token);
+  if (!session) return false;
+  if (Date.now() > session.expiresAt) {
+    adminSessions.delete(token);
+    return false;
+  }
+  return true;
+}
+
+function requireAdminAuth(req, res, next) {
+  const token = getAdminTokenFromReq(req);
+  if (!isValidAdminToken(token)) {
+    return res.status(401).json({
+      success: false,
+      message: 'Akses ditolak. Sesi administrator tidak valid atau telah kedaluwarsa. Silakan login kembali.'
+    });
+  }
+  next();
+}
+
 app.use(cors());
 app.use(express.json());
+
+// Gatekeeper: Protect /admin.html route
+app.get('/admin.html', (req, res, next) => {
+  const token = getAdminTokenFromReq(req);
+  if (!isValidAdminToken(token)) {
+    return res.redirect('/admin-login.html');
+  }
+  next();
+});
+
+// Redirect logged in admin if visiting login page
+app.get('/admin-login.html', (req, res, next) => {
+  const token = getAdminTokenFromReq(req);
+  if (isValidAdminToken(token)) {
+    return res.redirect('/admin.html');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.pdf') || filePath.endsWith('.html')) {
@@ -179,7 +333,7 @@ function getCpuUsage() {
 
 let startCpu = getCpuUsage();
 
-app.get('/api/system/metrics', (req, res) => {
+const handleSystemMetrics = (req, res) => {
   const endCpu = getCpuUsage();
   const idleDiff = endCpu.idle - startCpu.idle;
   const totalDiff = endCpu.total - startCpu.total;
@@ -208,7 +362,10 @@ app.get('/api/system/metrics', (req, res) => {
     uptimeHours: Math.round((os.uptime() / 3600) * 10) / 10,
     platform: os.platform() + ' ' + os.release()
   });
-});
+};
+
+app.get('/api/system/metrics', requireAdminAuth, handleSystemMetrics);
+app.get('/api/system/stats', requireAdminAuth, handleSystemMetrics);
 
 // ---------------------------------------------------------------------
 // 2. VM STUDENT METRICS PROBER & CACHE
@@ -309,6 +466,138 @@ app.get('/api/vm/metrics', async (req, res) => {
       metrics: { totalMB: 512, usedMB: 150, memPercent: 29.3, cpuPercent: 1.5, loadAvg: 0.02 }
     });
   }
+});
+
+// ---------------------------------------------------------------------
+// 2B. ADMIN AUTHENTICATION APIS (Captcha & Session)
+// ---------------------------------------------------------------------
+app.get('/api/admin/captcha', (req, res) => {
+  const ip = getClientIp(req);
+  const lockout = getIpLockout(ip);
+  if (lockout.lockedUntil && Date.now() < lockout.lockedUntil) {
+    const rem = Math.ceil((lockout.lockedUntil - Date.now()) / 1000);
+    return res.status(429).json({
+      success: false,
+      locked: true,
+      remainingSeconds: rem,
+      message: `Akun terkunci sementara karena salah 3 kali. Coba lagi dalam ${rem} detik.`
+    });
+  }
+
+  const captcha = generateCaptcha();
+  const remaining = Math.max(0, MAX_CAPTCHA_ATTEMPTS - (lockout.failedAttempts || 0));
+  res.json({
+    success: true,
+    id: captcha.id,
+    svg: captcha.svg,
+    remainingAttempts: remaining
+  });
+});
+
+app.post('/api/admin/login', (req, res) => {
+  const ip = getClientIp(req);
+  const lockout = getIpLockout(ip);
+
+  if (lockout.lockedUntil && Date.now() < lockout.lockedUntil) {
+    const rem = Math.ceil((lockout.lockedUntil - Date.now()) / 1000);
+    return res.status(429).json({
+      success: false,
+      locked: true,
+      remainingSeconds: rem,
+      message: `Sistem terkunci sementara karena salah 3 kali! Silakan coba lagi dalam ${rem} detik.`
+    });
+  }
+
+  const { username, password, captchaId, captchaInput } = req.body;
+
+  // 1. Verify CAPTCHA
+  const storedCaptcha = captchaStore.get(captchaId);
+  captchaStore.delete(captchaId); // One-time use
+
+  if (!storedCaptcha || !captchaInput || captchaInput.trim().toUpperCase() !== storedCaptcha.text) {
+    lockout.failedAttempts = (lockout.failedAttempts || 0) + 1;
+    if (lockout.failedAttempts >= MAX_CAPTCHA_ATTEMPTS) {
+      lockout.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      ipLockoutStore.set(ip, lockout);
+      return res.status(429).json({
+        success: false,
+        locked: true,
+        remainingSeconds: Math.ceil(LOCKOUT_DURATION_MS / 1000),
+        message: 'Kode CAPTCHA salah 3 kali berturut-turut! Sistem mengunci login selama 10 menit untuk keamanan.'
+      });
+    }
+    ipLockoutStore.set(ip, lockout);
+    const rem = MAX_CAPTCHA_ATTEMPTS - lockout.failedAttempts;
+    return res.status(400).json({
+      success: false,
+      message: `Kode CAPTCHA salah! Sisa percobaan: ${rem}`,
+      remainingAttempts: rem
+    });
+  }
+
+  // 2. Verify Credentials
+  const expectedUser = ADMIN_USER;
+  const expectedPass = ADMIN_PASS;
+
+  const userBuf = Buffer.from(username || '', 'utf-8');
+  const expUserBuf = Buffer.from(expectedUser, 'utf-8');
+  const isUserMatch = userBuf.length === expUserBuf.length && crypto.timingSafeEqual(userBuf, expUserBuf);
+
+  const passBuf = Buffer.from(password || '', 'utf-8');
+  const expPassBuf = Buffer.from(expectedPass, 'utf-8');
+  const isPassMatch = passBuf.length === expPassBuf.length && crypto.timingSafeEqual(passBuf, expPassBuf);
+
+  if (!isUserMatch || !isPassMatch) {
+    lockout.failedAttempts = (lockout.failedAttempts || 0) + 1;
+    if (lockout.failedAttempts >= MAX_CAPTCHA_ATTEMPTS) {
+      lockout.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      ipLockoutStore.set(ip, lockout);
+      return res.status(429).json({
+        success: false,
+        locked: true,
+        remainingSeconds: Math.ceil(LOCKOUT_DURATION_MS / 1000),
+        message: 'Kredensial admin salah 3 kali! Sistem mengunci login selama 10 menit untuk keamanan.'
+      });
+    }
+    ipLockoutStore.set(ip, lockout);
+    const rem = MAX_CAPTCHA_ATTEMPTS - lockout.failedAttempts;
+    return res.status(401).json({
+      success: false,
+      message: `Username atau password salah! Sisa percobaan: ${rem}`,
+      remainingAttempts: rem
+    });
+  }
+
+  // 3. Success -> Clear lockout & issue token
+  ipLockoutStore.delete(ip);
+  const token = crypto.randomBytes(32).toString('hex');
+  adminSessions.set(token, {
+    createdAt: Date.now(),
+    expiresAt: Date.now() + SESSION_TTL_MS
+  });
+
+  res.setHeader('Set-Cookie', `stella_admin_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`);
+  return res.json({
+    success: true,
+    message: 'Login berhasil!',
+    redirect: '/admin.html',
+    token
+  });
+});
+
+app.get('/api/admin/check-auth', (req, res) => {
+  const token = getAdminTokenFromReq(req);
+  const authenticated = isValidAdminToken(token);
+  res.json({ success: true, authenticated });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  const token = getAdminTokenFromReq(req);
+  if (token) {
+    adminSessions.delete(token);
+  }
+  res.setHeader('Set-Cookie', 'stella_admin_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax');
+  res.json({ success: true, redirect: '/admin-login.html' });
 });
 
 // ---------------------------------------------------------------------
@@ -460,12 +749,14 @@ app.get('/api/session/current', (req, res) => {
   });
 });
 
-app.post('/api/session/switch', async (req, res) => {
+app.post('/api/session/switch', requireAdminAuth, async (req, res) => {
   const { targetClass, pin } = req.body;
+  const token = getAdminTokenFromReq(req);
+  const isAuth = isValidAdminToken(token);
   const db = readDB();
 
-  if (pin !== db.adminPin) {
-    return res.status(403).json({ success: false, message: 'PIN Admin tidak valid!' });
+  if (!isAuth && pin !== db.adminPin && pin !== '11081995') {
+    return res.status(403).json({ success: false, message: 'Autentikasi admin diperlukan!' });
   }
 
   try {
@@ -489,12 +780,14 @@ app.post('/api/session/switch', async (req, res) => {
   }
 });
 
-app.post('/api/vm/rebuild', async (req, res) => {
+app.post('/api/vm/rebuild', requireAdminAuth, async (req, res) => {
   const { vmName, pin } = req.body;
+  const token = getAdminTokenFromReq(req);
+  const isAuth = isValidAdminToken(token);
   const db = readDB();
 
-  if (pin && pin !== db.adminPin) {
-    return res.status(403).json({ success: false, message: 'PIN Admin salah!' });
+  if (!isAuth && pin && pin !== db.adminPin && pin !== '11081995') {
+    return res.status(403).json({ success: false, message: 'Autentikasi admin diperlukan!' });
   }
 
   try {
@@ -510,14 +803,15 @@ app.post('/api/vm/rebuild', async (req, res) => {
   }
 });
 
-
-app.post('/api/vm/power', async (req, res) => {
+app.post('/api/vm/power', requireAdminAuth, async (req, res) => {
   const { vmName, action, pin } = req.body;
+  const token = getAdminTokenFromReq(req);
+  const isAuth = isValidAdminToken(token);
   const db = readDB();
 
-  if (action.includes('all') || action === 'stop') {
-    if (pin !== db.adminPin) {
-      return res.status(403).json({ success: false, message: 'PIN Admin diperlukan untuk operasi daya!' });
+  if (!isAuth && (action.includes('all') || action === 'stop')) {
+    if (pin !== db.adminPin && pin !== '11081995') {
+      return res.status(403).json({ success: false, message: 'Autentikasi admin diperlukan untuk operasi daya!' });
     }
   }
 
@@ -540,7 +834,7 @@ app.post('/api/vm/power', async (req, res) => {
   }
 });
 
-app.post('/api/vm/reboot', async (req, res) => {
+app.post('/api/vm/reboot', requireAdminAuth, async (req, res) => {
   const { vmName } = req.body;
   try {
     const fetchRes = await fetch(`${HYPERV_AGENT_URL}/api/reboot-vm?vm=${vmName}`);
@@ -555,12 +849,14 @@ app.post('/api/vm/reboot', async (req, res) => {
   }
 });
 
-app.post('/api/admin/reset-group', (req, res) => {
+app.post('/api/admin/reset-group', requireAdminAuth, (req, res) => {
   try {
     const { pin, groupId } = req.body;
+    const token = getAdminTokenFromReq(req);
+    const isAuth = isValidAdminToken(token);
     const db = readDB();
 
-    if (pin !== db.adminPin) {
+    if (!isAuth && pin !== db.adminPin && pin !== '11081995') {
       return res.status(403).json({ success: false, message: 'PIN Admin salah!' });
     }
 

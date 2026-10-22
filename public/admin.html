@@ -82,6 +82,12 @@
         <a href="/" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium transition shadow-sm">
           Portal Siswa
         </a>
+        <button onclick="handleLogout()" class="text-xs font-mono px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold transition shadow-sm flex items-center gap-1.5" title="Keluar dari Panel Admin">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Keluar</span>
+        </button>
       </div>
     </div>
 
@@ -341,8 +347,7 @@
 
     async function switchSession(targetClass) {
       if (targetClass === currentSession) return;
-      const pin = prompt(`Peralihan Sesi ke [${targetClass}]\nMasukkan PIN Admin Guru (Default: admin123):`);
-      if (!pin) return;
+      if (!confirm(`Peralihan Sesi Kelas ke [${targetClass}]?\n\nSemua disk VM kelompok akan dialihkan ke profil kelas ${targetClass}. Lanjutkan?`)) return;
 
       showToast('Peralihan Sesi', `Menukar disk seluruh 15 VM ke profil ${targetClass}...`);
       triggerFastPolling(15);
@@ -369,8 +374,7 @@
       const isStart = action === 'start';
       let pin = '';
       if (!isStart) {
-        pin = prompt(`Konfirmasi Mematikan [${vmName}]\nMasukkan PIN Admin Guru (Default: admin123):`);
-        if (!pin) return;
+        if (!confirm(`Matikan mesin virtual [${vmName}]?`)) return;
       }
 
       // Set pending state visually
@@ -397,8 +401,7 @@
     async function powerAll(action) {
       const isStart = action === 'start-all';
       const actionText = isStart ? 'Menyalakan Seluruh 15 VM' : 'Mematikan Seluruh 15 VM';
-      const pin = prompt(`⚠️ KONFIRMASI DAYA MASSAL\n${actionText}\nMasukkan PIN Admin Guru (Default: admin123):`);
-      if (!pin) return;
+      if (!confirm(`⚠️ PERINGATAN DAYA MASSAL\n\nApakah Anda yakin ingin ${actionText}?`)) return;
 
       // Mark all VMs as transitioning
       for (let i = 1; i <= 15; i++) {
@@ -426,8 +429,7 @@
     }
 
     async function rebuildVM(vmName) {
-      const pin = prompt('⚡ FACTORY RESET [' + vmName + ']\\nServer akan dikembalikan ke kondisi Ubuntu Master bersih.\\nMasukkan PIN Admin Guru (Default: admin123):');
-      if (!pin) return;
+      if (!confirm('⚡ FACTORY RESET [' + vmName + ']\n\nServer kelompok akan di-reset total dan dikembalikan ke kondisi Ubuntu Master bersih. Lanjutkan?')) return;
 
       pendingTransitions[vmName] = 'rebuilding';
       showToast('Rebuilding OS', 'Mereset ' + vmName + ' ke master image kosongan bersih...');
@@ -566,8 +568,7 @@
     }
 
     async function resetGroup(groupId) {
-      const pin = prompt('Masukkan PIN Admin Guru (Default: admin123):');
-      if (!pin) return;
+      if (!confirm('Kosongkan anggota siswa pada kelompok ini?')) return;
 
       try {
         const res = await fetch('/api/admin/reset-group', {
@@ -583,6 +584,27 @@
       }
     }
 
+    async function checkAdminAuth() {
+      try {
+        const res = await fetch('/api/admin/check-auth');
+        const data = await res.json();
+        if (!data.authenticated) {
+          window.location.href = '/admin-login.html';
+        }
+      } catch (e) {
+        window.location.href = '/admin-login.html';
+      }
+    }
+
+    async function handleLogout() {
+      if (!confirm('Yakin ingin keluar dari panel monitoring guru?')) return;
+      try {
+        await fetch('/api/admin/logout', { method: 'POST' });
+      } catch (e) {}
+      window.location.href = '/admin-login.html';
+    }
+
+    checkAdminAuth();
     checkSession();
     updateMetrics();
     setInterval(updateMetrics, 2000);
