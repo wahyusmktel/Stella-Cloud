@@ -11,32 +11,34 @@ if [ ! -f "$CONFIG" ]; then
     exit 1
 fi
 
-# Update config.php secara presisi menggunakan PHP engine
-php -r '
+# Update config.php secara presisi menggunakan PHP engine via heredoc
+php7.4 << 'EOF'
+<?php
 $f = "/var/www/owncloud/config/config.php";
 $c = file_get_contents($f);
 
-// Ganti trusted_domains secara presisi
-$target = "\x27trusted_domains\x27 => \n  array (\n    0 => \x27localhost\x27,\n    1 => (isset(\$_SERVER[\x27HTTP_HOST\x27]) ? preg_replace(\x27/:[0-9]+$/\x27, \x27\x27, \$_SERVER[\x27HTTP_HOST\x27]) : \x27localhost\x27),\n  ),\n  ";
-$c = preg_replace("/\x27trusted_domains\x27\s*=>.*?\x27datadirectory\x27/s", $target . "\x27datadirectory\x27", $c);
+// Match trusted_domains down to datadirectory
+$target = "'trusted_domains' => \n  array (\n    0 => 'localhost',\n    1 => (isset(\$_SERVER['HTTP_HOST']) ? preg_replace('/:[0-9]+$/', '', \$_SERVER['HTTP_HOST']) : 'localhost'),\n  ),\n  'datadirectory'";
 
-// Tambahkan overwriteprotocol untuk HTTPS Cloudflare jika belum ada
-if (strpos($c, "overwriteprotocol") === false) {
+$c = preg_replace("/'trusted_domains'\\s*=>.*?'datadirectory'/s", $target, $c);
+
+// Inject overwriteprotocol jika belum ada
+if (strpos($c, 'overwriteprotocol') === false) {
     $c = str_replace(
-        "\x27overwrite.cli.url\x27",
-        "\x27overwriteprotocol\x27 => (isset(\$_SERVER[\x27HTTP_X_FORWARDED_PROTO\x27]) && \$_SERVER[\x27HTTP_X_FORWARDED_PROTO\x27] === \x27https\x27) ? \x27https\x27 : \x27\x27,\n  \x27overwrite.cli.url\x27",
+        "'overwrite.cli.url'",
+        "'overwriteprotocol' => (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : '',\n  'overwrite.cli.url'",
         $c
     );
 }
 
 file_put_contents($f, $c);
-'
+EOF
 
 # Pastikan permission tetap milik www-data
 chown www-data:www-data "$CONFIG"
 
 # Verifikasi sintaks PHP
-php -l "$CONFIG" > /dev/null 2>&1
+php7.4 -l "$CONFIG" > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo "=========================================================="
     echo " [OK] BERHASIL! Domain Trusted & HTTPS Siap Digunakan!    "
