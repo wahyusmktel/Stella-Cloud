@@ -1117,16 +1117,7 @@ app.post('/api/vm/rebuild', requireAdminAuth, async (req, res) => {
 });
 
 app.post('/api/vm/power', requireAdminAuth, async (req, res) => {
-  const { vmName, action, pin } = req.body;
-  const token = getAdminTokenFromReq(req);
-  const isAuth = isValidAdminToken(token);
-  const db = readDB();
-
-  if (!isAuth && (action.includes('all') || action === 'stop')) {
-    if (pin !== db.adminPin && pin !== '11081995') {
-      return res.status(403).json({ success: false, message: 'Autentikasi admin diperlukan untuk operasi daya!' });
-    }
-  }
+  const { vmName, action } = req.body;
 
   try {
     let url = '';
@@ -1134,6 +1125,8 @@ app.post('/api/vm/power', requireAdminAuth, async (req, res) => {
       url = `${HYPERV_AGENT_URL}/api/power-vm?vm=${vmName}&action=${action}`;
     } else if (action === 'start-all' || action === 'stop-all') {
       url = `${HYPERV_AGENT_URL}/api/power-all?action=${action}`;
+    } else {
+      return res.status(400).json({ success: false, message: 'Aksi daya tidak valid!' });
     }
     const fetchRes = await fetch(url);
     const agentData = await fetchRes.json();
